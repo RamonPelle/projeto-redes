@@ -4,6 +4,8 @@
 #include <net/ethernet.h>
 #include <linux/if_packet.h>
 #include <net/if.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 int cria_socket (char* nome_interface_rede) {

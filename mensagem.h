@@ -34,8 +34,8 @@ typedef enum {
 } CodigoErro_t;
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-mensagem_t cria_mensagem (unsigned char mi, unsigned char tam_dados, 
-                          unsigned char seq, unsigned char tipo, void* dados);
+mensagem_t cria_mensagem (unsigned char tam_dados, unsigned char seq, 
+                          unsigned char tipo, void* dados);
                   
 int envia_mensagem  (mensagem_t msg, int socket);
 int recebe_mensagem (mensagem_t* msg, int socket);
