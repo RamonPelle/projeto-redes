@@ -30,7 +30,7 @@ int cria_socket (char* nome_interface_rede) {
 
    struct packet_mreq mr = {0};
    mr.mr_ifindex = ifindex;
-   mr.mr_type = PACKET_MR_PROMISC;
+   mr.mr_type    = PACKET_MR_PROMISC;
    // Não joga fora o que identifica como lixo: Modo promíscuo
    if (setsockopt(soquete, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mr, sizeof(mr)) == -1) {
        fprintf(stderr, "Erro ao fazer setsockopt: "
@@ -40,3 +40,4 @@ int cria_socket (char* nome_interface_rede) {
 
    return soquete;
 }
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */

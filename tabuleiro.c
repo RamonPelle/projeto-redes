@@ -49,3 +49,4 @@ void gera_tesouros(char** MatrizTabuleiro, int tam, int num_tesouros)
       }
    }
 }
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
