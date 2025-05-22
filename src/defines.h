@@ -6,6 +6,4 @@ typedef enum {
    SERVIDOR = 1
 } Usuario;
 
-
-
 #endif

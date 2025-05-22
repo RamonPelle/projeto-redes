@@ -3,9 +3,10 @@
 #include <stdlib.h>
 #include <time.h>
 
-/* Bibliotecas Locais */
-#include "defines.h"
-
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+/*                                 ✉ Criação                                 */
+/*                                de Mensagens                               */
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 void imprime_tabuleiro(char** MatrizTabuleiro, int tam)
 {
@@ -48,5 +49,17 @@ void gera_tesouros(char** MatrizTabuleiro, int tam, int num_tesouros)
          MatrizTabuleiro[linha][coluna] = 'X';
       }
    }
+}
+
+int fim_de_jogo(char** MatrizTabuleiro, int tam)
+{
+   int espacos_nao_visitados = 0;
+
+   for (int i = 0; i < tam; i++)
+      for (int j = 0; j < tam; j++)
+         if (MatrizTabuleiro[i] == ' ') espacos_nao_visitados++;
+
+   if     (espacos_nao_visitados == 0) return 1;
+   else if (espacos_nao_visitados > 0) return 0;
 }
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */

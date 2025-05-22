@@ -17,8 +17,8 @@ unsigned char calcula_checksum(mensagem_t msg)
    
    if (msg == NULL) return 0;
 
-   /* Checksum <- Início + Tamanho + Sequência + Tipo */
-   for (int i = 0; i < 4; i++)
+   /* Checksum <- Tamanho + Sequência + Tipo */
+   for (int i = 1; i < 4; i++)
       checksum += msg[i];
    /* Checksum <- Dados */
    for (int i = 5; i < 5 + MSG_TAMANHO(msg); i++)
@@ -51,28 +51,28 @@ int cria_mensagem(mensagem_t msg, unsigned char tam_dados, unsigned char seq,
 /*                           ✉ Envio e Recebimento                           */
 /*                                de Mensagens                               */
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */                                  
-/* [Função] protocolo_valido(): Verifica se uma mensagem fornecida é válida ou
+/* [Função] mensagem_valida(): Verifica se uma mensagem fornecida é válida ou
  * não, baseado no protocolo de mensagens utilizado. */
-int protocolo_valido(mensagem_t msg)
+int mensagem_valida(mensagem_t msg)
 {
    /* (1) Verifica a INTEGRIDADE da Mensagem:
     * - Marcador de Início está errado? ZERO.
     * - Tamanho da Mensagem maior que o suportado? ZERO.
     * - Tipo da Mensagem diferente dos suportados? ZERO.
     * - Sequência de Mensagem diferente do suportado? ZERO. */
-   if (MSG_INICIO(msg) != 0x7E) return 0;
-   if (MSG_TAMANHO(msg) > 0X7F) return 0;
-   if (MSG_TIPO(msg) > 0x0F)    return 0;
-   if (MSG_SEQUENCIA(msg) > 31) return 0;
+   if (MSG_INICIO(msg) != 0x7E) return MSG_INVALIDA;
+   if (MSG_TAMANHO(msg) > 0X7F) return MSG_INVALIDA;
+   if (MSG_TIPO(msg) > 0x0F)    return MSG_INVALIDA;
+   if (MSG_SEQUENCIA(msg) > 31) return MSG_INVALIDA;
 
    /* (2) Verifica o CHECKSUM da Mensagem:
     * - Calcula o Checksum da Mensagem recebida 
     * - Checksum calculado é diferente do recebido? ZERO. */
    unsigned char chcksm;
    chcksm = calcula_checksum(msg);
-   if (chcksm != MSG_CHECKSUM(msg)) return 0;
+   if (chcksm != MSG_CHECKSUM(msg)) return MSG_ERRO_CHECK;
 
-   return 1;
+   return MSG_VALIDA;
 }
 
 /* [Função] envia_mensagem(): Envia uma mensagem criada através de um soquete
@@ -90,7 +90,6 @@ int envia_mensagem(mensagem_t msg, int soquete)
    }
 }
 
-/* = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = */
 long long timestamp(){
    struct timeval tp;
    gettimeofday(&tp, NULL);
@@ -115,10 +114,12 @@ int recebe_mensagem(mensagem_t msg, int soquete, int timeoutMillis){
    int bytes_lidos;
    do {
       bytes_lidos = recv(soquete, msg, 132, 0);
-      if (protocolo_valido(msg))
+      if (mensagem_valida(msg) == MSG_VALIDA)
          return bytes_lidos;
+      else if (mensagem_valida(msg) == MSG_ERRO_CHECK)
+         return MSG_ERRO_CHECK;
    } while (timestamp() - comeco <= timeoutMillis);
 
-   return -1;
+   return MSG_TIMEOUT;
 }
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */

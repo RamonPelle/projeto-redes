@@ -1,11 +1,10 @@
-# /* - = - = - = Disciplina CI1238: Otimização = - = - = - */
-# // Docente: André Luiz Pires Guedes
-# // Discente 01: Leonardo Amorim Carpwiski    (GRR 20232331)
-# // Discente 02: Pedro Pinheiro Freitas Filho (GRR 20232379)
-# // Discente 03: Pedro Miguel Pinto Botelho   (GRR 20245929)
-# /* - = - = - = - = - = - = - = - = - = - = - = - = - = - */
+# /* - = - = - = Disciplina CI1058: Redes I = - = - = - */
+# // Docentes: Albini & Todt
+# // Discente 01: Leonardo Amorim Carpwiski (GRR 20232331)
+# // Discente 02: Ramon Pelle               (GRR 20232379)
+# /* - = - = - = - = - = - = - = - = - = - = - = - = - */
 
-# Curitiba, Paraná - Março/Abril, 2025
+# Curitiba, Paraná - Maio/Junho, 2025
 
 # -=-=-=-=-=-=-=-=-=-=-
 # Variáveis do Arquivo
