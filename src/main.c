@@ -20,10 +20,10 @@ int main(int argc, char* argv[]) {
    while ((opt = getopt(argc, argv, "cs")) != -1)
       switch (opt) {
          case 'c':
-            inicia_jogo_tesouro(soquete, CLIENTE);
+            jogo_tesouro(soquete, CLIENTE);
             break;
          case 's':
-            inicia_jogo_tesouro(soquete, SERVIDOR);
+            jogo_tesouro(soquete, SERVIDOR);
             break;
          default:
             fprintf(stderr, "Uso: %s (-c|-s) <interface-rede>\n", argv[0]);

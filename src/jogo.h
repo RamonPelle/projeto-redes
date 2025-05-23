@@ -15,7 +15,7 @@ typedef struct PosicaoJogador_s{
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-void inicia_jogo_tesouro(int soquete, Usuario usuario);
+void jogo_tesouro(int soquete, Usuario usuario);
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #endif
