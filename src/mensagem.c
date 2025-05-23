@@ -47,6 +47,15 @@ int cria_mensagem(mensagem_t msg, unsigned char tam_dados, unsigned char seq,
    return 0;
 }
 
+int copia_mensagem(mensagem_t msg_original, mensagem_t msg_copia){
+   if (msg_original == NULL || msg_copia == NULL) return 0;
+
+   for (int i = 0; i < 132; i++)
+      msg_copia[i] = msg_original[i];
+   
+   return 1;
+}
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /*                           ✉ Envio e Recebimento                           */
 /*                                de Mensagens                               */

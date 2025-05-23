@@ -8,9 +8,11 @@
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 #define NUM_TESOUROS  8
 #define TAM_TABULEIRO 8
+#define TEMPO_TIMEOUT 500
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+/* Funções Auxiliares da execução do jogo */
 char** alocaMatriz(int tam_matriz)
 {
    char** M;
@@ -37,16 +39,19 @@ void liberaMatriz(char** M, int tam_matriz)
 void inicia_jogo_tesouro(int soquete, Usuario usuario)
 {
    /* Variáveis do Jogo */
-   PosicaoJogador_t coordenadas_jogador;
-   coordenadas_jogador.l = 7;
-   coordenadas_jogador.c = 0;
+   PosicaoJogador_t coord_jogador;
+   coord_jogador.l = 7;
+   coord_jogador.c = 0;
 
    /* Flags de Controle do Programa */
    int validade;
+   unsigned char inicio_da_rodada;
    unsigned char jogo_em_andamento   = 1;
    unsigned char transmissao_arquivo = 0;
    unsigned char acabou_rodada       = 0;
    unsigned char envia_ou_recebe     = 0;
+   unsigned char reenvia_mensagem;
+   unsigned char mensagem_com_erro;
 
    mensagem_t msg_enviar   = (mensagem_t) malloc(132 * sizeof(unsigned char));
    mensagem_t msg_anterior = (mensagem_t) malloc(132 * sizeof(unsigned char));
@@ -64,7 +69,7 @@ void inicia_jogo_tesouro(int soquete, Usuario usuario)
     * e Vídeo), não enviá-las.
     * (3) ... */
    if (usuario == CLIENTE){
-      MatrizTabuleiro[coordenadas_jogador.l][coordenadas_jogador.c] = 'P';
+      MatrizTabuleiro[coord_jogador.l][coord_jogador.c] = 'P';
       
       char movimento;
       while (jogo_em_andamento){
@@ -74,23 +79,23 @@ void inicia_jogo_tesouro(int soquete, Usuario usuario)
          scanf("%c", &movimento);
          getchar();
 
-         MatrizTabuleiro[coordenadas_jogador.l][coordenadas_jogador.c] = '*';
+         MatrizTabuleiro[coord_jogador.l][coord_jogador.c] = '*';
          unsigned char tipo_msg;
          switch(movimento){
             case 'w':
-               coordenadas_jogador.l--;
+               coord_jogador.l--;
                tipo_msg = MV_CM;
                break;
             case 'a':
-               coordenadas_jogador.c--;
+               coord_jogador.c--;
                tipo_msg = MV_EQ;
                break;
             case 's':
-               coordenadas_jogador.l++;
+               coord_jogador.l++;
                tipo_msg = MV_BX;
                break;
             case 'd':
-               coordenadas_jogador.c++;
+               coord_jogador.c++;
                tipo_msg = MV_DI;
                break;
             default:
@@ -98,17 +103,17 @@ void inicia_jogo_tesouro(int soquete, Usuario usuario)
          }
          
          /* Corrige as Coordenadas Inválidas! */
-         if (coordenadas_jogador.l < 0)
-            coordenadas_jogador.l = 0;
-         if (coordenadas_jogador.l == TAM_TABULEIRO)
-            coordenadas_jogador.l = TAM_TABULEIRO - 1;
-         if (coordenadas_jogador.c < 0)
-            coordenadas_jogador.c = 0;
-         if (coordenadas_jogador.c == TAM_TABULEIRO)
-            coordenadas_jogador.c = TAM_TABULEIRO - 1;
+         if (coord_jogador.l < 0)
+            coord_jogador.l = 0;
+         if (coord_jogador.l == TAM_TABULEIRO)
+            coord_jogador.l = TAM_TABULEIRO - 1;
+         if (coord_jogador.c < 0)
+            coord_jogador.c = 0;
+         if (coord_jogador.c == TAM_TABULEIRO)
+            coord_jogador.c = TAM_TABULEIRO - 1;
 
          /* Atualiza a Posição do Jogador! */
-         MatrizTabuleiro[coordenadas_jogador.l][coordenadas_jogador.c] = 'P';
+         MatrizTabuleiro[coord_jogador.l][coord_jogador.c] = 'P';
 
          /*           - = Transmissão de Mensagens = -            */
          /* (1) Cliente -> Servidor: Movimento do Jogador 
@@ -127,26 +132,69 @@ void inicia_jogo_tesouro(int soquete, Usuario usuario)
           *                ⚠ ABAIXO DAQUI ESTÁ EM CONSTRUÇÃO ⚠
           * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
 
-         /* Inicializa as Flags e Variáveis da rodada inicial */
-         envia_ou_recebe = ESTADO_ENVIA;
+         /* Inicializa as Flags e Variáveis da rodada */
+         envia_ou_recebe     = ESTADO_ENVIA;
+         inicio_da_rodada    = 1;
+         transmissao_arquivo = 0;
+         acabou_rodada       = 0;
+         reenvia_mensagem    = 0;
+         mensagem_com_erro   = 0;
 
-         /* Enquanto não acabou a RODADA:
-          *    ...
-          *                                  */
          while (!acabou_rodada){
-            /* (1) Cliente ENVIA uma Mensagem */
+            /* (1) Cliente ENVIA uma Mensagem 
+             * 〖 Listagem das Possibilidades 〗
+             * Nome da Mensagem | Descrição
+             * -------------------------------------------------------------
+             * MV               | Movimento (Esquerda, Direita, Cima, Baixo)
+             * ACK              | Acknownlegde
+             * NACK             | Not Acknownlegde
+             * FIM_RODADA       | Fim da Rodada atual
+             * ERRO             | Erro (Espaço Insuficiente)
+             * 
+             * 〖 Tabela de Envio de Mensagens 〗
+             * Mensagem RECEBIDA | Mensagem A ENVIAR 
+             * -------------------------------------
+             *                                                               */
             if (envia_ou_recebe == ESTADO_ENVIA){
-               /* ... */
+               if (reenvia_mensagem == 1){
+                  envia_mensagem(msg_anterior, soquete);
+                  envia_ou_recebe = ESTADO_RECEBE;
+                  reenvia_mensagem = 0;
+               }
+               else if (mensagem_com_erro == 1){
+                  cria_mensagem(msg_enviar, 0, 0, NACK, NULL);
+                  envia_mensagem(msg_enviar, soquete);
+                  envia_ou_recebe = ESTADO_RECEBE;
+                  mensagem_com_erro = 0;
+               }
+               else {
+                  if (MSG_TIPO(msg_recebida) == TESOURO){
+                     if (msg_recebida[5] == 0){
+                        printf("\nTESOURO NAO FOI ENCONTRADO...\n");
+                     }
+                     else {
+                        printf("\nTESOURO ENCONTRADO!!!\n");
+                     }
+                     cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
+                     envia_mensagem(msg_enviar, soquete);
+                     envia_ou_recebe = ESTADO_RECEBE;
+                  }
+                  else if (MSG_TIPO(msg_recebida) == NACK){
+                     reenvia_mensagem = 1;
+                  }
+               }
             }
 
             /* (2) Cliente RECEBE uma Mensagem */
             else if (envia_ou_recebe == ESTADO_RECEBE){
-               validade = recebe_mensagem(msg_recebida, soquete, 1000);
+               validade = recebe_mensagem(msg_recebida, soquete, TEMPO_TIMEOUT);
                if (validade == MSG_TIMEOUT){
-                  /* ... */
+                  reenvia_mensagem = 1;
+                  envia_ou_recebe  = ESTADO_ENVIA;
                }
-               else if (validade == INVL_CHECKSUM){
-                  /* ... */
+               else if (validade == MSG_ERRO_CHECK){
+                  mensagem_com_erro = 1;
+                  envia_ou_recebe = ESTADO_ENVIA;
                }
                else if (validade == MSG_VALIDA)
                   envia_ou_recebe = ESTADO_ENVIA;
@@ -175,15 +223,10 @@ void inicia_jogo_tesouro(int soquete, Usuario usuario)
     * e Vídeo), não recebê-las.
     * (3) ... */
    else if (usuario == SERVIDOR){
-      /* Variáveis específicas do Servidor */
-      int inicio_da_rodada;
-
       /* Gera os Tesouros no Tabuleiro */
       gera_tesouros(MatrizTabuleiro, TAM_TABULEIRO, NUM_TESOUROS);
 
       while (jogo_em_andamento){
-         /* Início da Rodada */
-         inicio_da_rodada = 1;
          imprime_tabuleiro(MatrizTabuleiro, TAM_TABULEIRO);
 
          /*           - = Transmissão de Mensagens = -            */
@@ -204,28 +247,90 @@ void inicia_jogo_tesouro(int soquete, Usuario usuario)
           * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
 
          /* Inicializa as Flags e Variáveis da rodada inicial */
-         envia_ou_recebe = ESTADO_RECEBE;
-
-         /* Enquanto não acabou a RODADA:
-          *    ...
-          *                                  */
+         envia_ou_recebe     = ESTADO_RECEBE;
+         inicio_da_rodada    = 1;
+         transmissao_arquivo = 0;
+         acabou_rodada       = 0;
+         reenvia_mensagem    = 0;
+         mensagem_com_erro   = 0;
+   
          while (!acabou_rodada){
-            /* (1) Servidor ENVIA uma Mensagem */
+            /* (1) Servidor ENVIA uma Mensagem 
+             * 〖 Listagem das Possibilidades 〗
+             * Nome da Mensagem | Descrição
+             * -------------------------------------------------------------
+             * TESOURO          | Tem Tesouro? (Sim ou Não)
+             * ACK              | Acknownlegde
+             * NACK             | Not Acknownlegde
+             * FIM_RODADA       | Fim da Rodada atual
+             * ERRO             | Erro (Espaço Insuficiente)
+             * 
+             * 〖 Tabela de Envio de Mensagens 〗
+             * Mensagem RECEBIDA | Mensagem A ENVIAR 
+             * -------------------------------------
+             *                                                               */
             if (envia_ou_recebe == ESTADO_ENVIA){
-               /* . . . */
+               if (reenvia_mensagem == 1){
+                  envia_mensagem(msg_anterior, soquete);
+                  envia_ou_recebe = ESTADO_RECEBE;
+                  reenvia_mensagem = 0;
+               }
+               else if (mensagem_com_erro == 1){
+                  cria_mensagem(msg_enviar, 0, 0, NACK, NULL);
+                  envia_mensagem(msg_enviar, soquete);
+                  envia_ou_recebe = ESTADO_RECEBE;
+                  mensagem_com_erro = 0;
+               }
+               else {
+                  unsigned char msg_tipo = MSG_TIPO(msg_recebida);
+                  
+                  if (msg_tipo == MV_BX || msg_tipo == MV_CM 
+                     || msg_tipo == MV_EQ || msg_tipo == MV_DI){
+                     /* Processa o Movimento
+                      * ... */
+                     unsigned char tem_tesouro = 0;
+
+                     if (MatrizTabuleiro[coord_jogador.l][coord_jogador.c] == 'X')
+                        tem_tesouro = 1;
+
+                     cria_mensagem(msg_enviar, 1, 0, TESOURO, &tem_tesouro);
+                     envia_mensagem(msg_enviar, soquete);
+                     envia_ou_recebe = ESTADO_RECEBE;
+                  }
+                  else if (MSG_TIPO(msg_recebida) == ACK){
+                     cria_mensagem(msg_enviar, 0, 0, FIM_RODADA, NULL);
+                     envia_mensagem(msg_enviar, soquete);
+                     envia_ou_recebe = ESTADO_RECEBE;
+                  }
+                  else if (MSG_TIPO(msg_recebida) == FIM_RODADA){
+                     cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
+                     envia_mensagem(msg_enviar, soquete);
+                     envia_ou_recebe = ESTADO_RECEBE;
+                  }
+                  else if (MSG_TIPO(msg_recebida) == NACK){
+                     reenvia_mensagem = 1;
+                  }
+               }
             }
 
             /* (2) Servidor RECEBE uma Mensagem */
             else if (envia_ou_recebe == ESTADO_RECEBE){
-               validade = recebe_mensagem(msg_recebida, soquete, 1000);
+               validade = recebe_mensagem(msg_recebida, soquete, TEMPO_TIMEOUT);
                if (validade == MSG_TIMEOUT){
-                  /* ... */
+                  if (inicio_da_rodada == 0){
+                     reenvia_mensagem = 1;
+                     envia_ou_recebe  = ESTADO_ENVIA;
+                  }
                }
-               else if (validade == INVL_CHECKSUM){
-                  /* ... */
-               }
-               else if (validade == MSG_VALIDA)
+               else if (validade == MSG_ERRO_CHECK){
+                  if (inicio_da_rodada == 1) inicio_da_rodada = 0;
+                  mensagem_com_erro = 1;
                   envia_ou_recebe = ESTADO_ENVIA;
+               }
+               else if (validade == MSG_VALIDA){
+                  if (inicio_da_rodada == 1) inicio_da_rodada = 0;
+                  envia_ou_recebe = ESTADO_ENVIA;
+               }
             }
          }
 

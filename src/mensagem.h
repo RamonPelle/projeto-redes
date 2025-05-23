@@ -47,6 +47,7 @@ int cria_mensagem(mensagem_t msg, unsigned char tam_dados, unsigned char seq,
                   
 int envia_mensagem  (mensagem_t msg, int socket);
 int recebe_mensagem (mensagem_t msg, int soquete, int timeoutMillis);
+int copia_mensagem  (mensagem_t msg_original, mensagem_t msg_copia);
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #endif
