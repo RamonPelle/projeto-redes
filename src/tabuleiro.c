@@ -61,5 +61,7 @@ int fim_de_jogo(char** MatrizTabuleiro, int tam)
 
    if     (espacos_nao_visitados == 0) return 1;
    else if (espacos_nao_visitados > 0) return 0;
+
+   return 0;
 }
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */

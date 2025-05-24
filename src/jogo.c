@@ -344,6 +344,8 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   
                   /* (MR01) Mensagem MOVIMENTO */
                   if (msg_tipo_sv == MV_BX || msg_tipo_sv == MV_CM || msg_tipo_sv == MV_EQ || msg_tipo_sv == MV_DI){
+                     MatrizTabuleiro[coord_jogador.l][coord_jogador.c] = ' ';
+                     
                      /* Processa o Movimento */
                      switch(msg_tipo_sv){
                         case MV_BX:
@@ -376,6 +378,8 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      if (MatrizTabuleiro[coord_jogador.l][coord_jogador.c] == 'X')
                         tem_tesouro = 1;
 
+                     MatrizTabuleiro[coord_jogador.l][coord_jogador.c] = 'P';
+                     
                      cria_mensagem(msg_enviar, 1, 0, TESOURO, &tem_tesouro);
                   }
                   /* (MR02) Mensagem ACK */
