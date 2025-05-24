@@ -133,7 +133,7 @@ int recebe_mensagem(mensagem_t msg, int soquete, int timeoutMillis){
    while (total_bytes < 132){
       if (timestamp() - comeco > timeoutMillis) return MSG_TIMEOUT;
 
-      int bytes_leitura = 132 - total_bytes;
+      int bytes_restantes = 132 - total_bytes;
 
       bytes_lidos = recv(soquete, &buffer[total_bytes], bytes_restantes, 0);
       if (bytes_lidos > 0){
