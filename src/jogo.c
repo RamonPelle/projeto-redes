@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/statvfs.h>
 
 #include "jogo.h"
 #include "tabuleiro.h"
@@ -100,7 +102,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
          MatrizTabuleiro[coord_jogador.l][coord_jogador.c] = '*';
 
-         unsigned char tipo_movimento;
+         unsigned char tipo_movimento = 0;
 
          switch(movimento){
             case 'w':
@@ -181,13 +183,11 @@ void jogo_tesouro(int soquete, Usuario usuario)
                /* (ST01) Tempo de Timeout Atingido... */
                if (reenvia_mensagem == 1){
                   copia_mensagem(msg_anterior, msg_enviar);
-                  envia_mensagem(msg_enviar, soquete);
                   reenvia_mensagem = 0;
                }
                /* (ST02) Mensagem Recebida contém Erro... */
                else if (mensagem_com_erro == 1){
                   cria_mensagem(msg_enviar, 0, 0, NACK, NULL);
-                  envia_mensagem(msg_enviar, soquete);
                   copia_mensagem(msg_enviar, msg_anterior);
                   mensagem_com_erro = 0;
                }
@@ -197,15 +197,14 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
                   /* (MR01) Mensagem TESOURO */
                   if (msg_tipo_cl == TESOURO){
-                     inicio_da_rodada = 0;
                      if (msg_recebida[5] == 0){
                         printf("\nTESOURO NAO FOI ENCONTRADO...\n");
                      }
                      else {
                         printf("\nTESOURO ENCONTRADO!!!\n");
                      }
+
                      cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
-                     envia_mensagem(msg_enviar, soquete);
                   }
                   /* (MR02) Mensagem ACK */
                   else if (msg_tipo_cl == ACK){
@@ -233,7 +232,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   }
                   /* (MR08) Mensagem NACK */
                   else if (msg_tipo_cl == NACK){
-                     envia_mensagem(msg_anterior, soquete);
+                     copia_mensagem(msg_anterior, msg_enviar);
                   }
                   /* (MR09) Mensagem ERRO */
                   else if (msg_tipo_cl == ERRO){
@@ -241,6 +240,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   }
                }
 
+               envia_mensagem(msg_anterior, soquete);
                copia_mensagem(msg_enviar, msg_anterior);
                envia_ou_recebe = ESTADO_RECEBE;
             }
@@ -250,16 +250,12 @@ void jogo_tesouro(int soquete, Usuario usuario)
                validade = recebe_mensagem(msg_recebida, soquete, TEMPO_TIMEOUT);
                
                /* (ST01) Tempo de Timeout Atingido... */
-               if (validade == MSG_TIMEOUT){
+               if (validade == MSG_TIMEOUT || validade == MSG_INVALIDA){
                   reenvia_mensagem = 1;
                }
                /* (ST02) Mensagem Recebida contém Erro... */
                else if (validade == MSG_ERRO_CHECK){
                   mensagem_com_erro = 1;
-               }
-               /* (ST03) Mensagem Recebida Confirmada! */
-               else if (validade == MSG_VALIDA){
-
                }
 
                envia_ou_recebe = ESTADO_ENVIA;
@@ -294,7 +290,6 @@ void jogo_tesouro(int soquete, Usuario usuario)
          /*           - = Transmissão de Mensagens = -            */
 
          /* Inicializa as Flags e Variáveis */
-         inicio_da_rodada    = 1;
          transmissao_arquivo = 0;
          acabou_rodada       = 0;
          reenvia_mensagem    = 0;
@@ -336,13 +331,11 @@ void jogo_tesouro(int soquete, Usuario usuario)
                /* (ST01) Tempo de Timeout Atingido... */
                if (reenvia_mensagem == 1){
                   copia_mensagem(msg_anterior, msg_enviar);
-                  envia_mensagem(msg_enviar, soquete);
                   reenvia_mensagem = 0;
                }
                /* (ST02) Mensagem Recebida contém Erro... */
                else if (mensagem_com_erro == 1){
                   cria_mensagem(msg_enviar, 0, 0, NACK, NULL);
-                  envia_mensagem(msg_enviar, soquete);
                   mensagem_com_erro = 0;
                }
                /* (ST03) Mensagem Recebida Confirmada! */
@@ -384,22 +377,18 @@ void jogo_tesouro(int soquete, Usuario usuario)
                         tem_tesouro = 1;
 
                      cria_mensagem(msg_enviar, 1, 0, TESOURO, &tem_tesouro);
-                     envia_mensagem(msg_enviar, soquete);
                   }
                   /* (MR02) Mensagem ACK */
                   else if (msg_tipo_sv == ACK){
                      cria_mensagem(msg_enviar, 0, 0, FIM_RODADA, NULL);
-                     envia_mensagem(msg_enviar, soquete);
                   }
                   /* (MR03) Mensagem FIM_RODADA */
                   else if (msg_tipo_sv == FIM_RODADA){
                      cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
-                     envia_mensagem(msg_enviar, soquete);
                   }
                   /* (MR04) Mensagem NACK */
                   else if (msg_tipo_sv == NACK){
                      copia_mensagem(msg_anterior, msg_enviar);
-                     envia_mensagem(msg_enviar, soquete);
                   }
                   /* (MR05) Mensagem ERRO */
                   else if (msg_tipo_sv == ERRO){
@@ -407,6 +396,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   }
                }
 
+               envia_mensagem(msg_enviar, soquete);
                copia_mensagem(msg_enviar, msg_anterior);
                envia_ou_recebe = ESTADO_RECEBE;
             }
@@ -416,19 +406,16 @@ void jogo_tesouro(int soquete, Usuario usuario)
                validade = recebe_mensagem(msg_recebida, soquete, TEMPO_TIMEOUT);
 
                /* (ST01) Tempo de Timeout Atingido... */
-               if (validade == MSG_TIMEOUT){
-                  if (inicio_da_rodada == 0){
-                     reenvia_mensagem = 1;
-                  }
+               if (validade == MSG_TIMEOUT || validade == MSG_INVALIDA){
+                  reenvia_mensagem = 1;
                }
                /* (ST02) Mensagem Recebida contém Erro... */
                else if (validade == MSG_ERRO_CHECK){
-                  if (inicio_da_rodada == 1) inicio_da_rodada = 0;
                   mensagem_com_erro = 1;
                }
                /* (ST03) Mensagem Recebida Confirmada! */
                else if (validade == MSG_VALIDA){
-                  if (inicio_da_rodada == 1) inicio_da_rodada = 0;
+
                }
 
                envia_ou_recebe = ESTADO_ENVIA;

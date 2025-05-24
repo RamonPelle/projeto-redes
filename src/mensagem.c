@@ -1,6 +1,7 @@
 /* Bibliotecas Padrão */
 #include <stdlib.h>
-#include <time.h>
+#include <sys/time.h>
+#include <sys/socket.h>
 
 /* Bibliotecas Locais */
 #include "mensagem.h"
@@ -41,6 +42,9 @@ int cria_mensagem(mensagem_t msg, unsigned char tam_dados, unsigned char seq,
 
    for (int i = 5; i < 5 + tam_dados; i++)
       msg[i] = dados[i - 5];
+   
+   for (int i = 5 + tam_dados; i < 132; i++)
+      msg[i] = 0;
 
    MSG_CHECKSUM(msg) = calcula_checksum(msg);
 
@@ -91,8 +95,8 @@ int envia_mensagem(mensagem_t msg, int soquete)
 {
    int bytes_enviados;
 
-   if (protocolo_valido(msg)){
-      bytes_enviados = send(soquete, msg, 5 + MSG_TAMANHO(msg), 0);
+   if (mensagem_valida(msg) == MSG_VALIDA){
+      bytes_enviados = send(soquete, msg, 132, 0);
       return bytes_enviados;
    } else {
       return -1;
@@ -108,9 +112,7 @@ long long timestamp(){
 /* [Função] recebe_mensagem(): Captura uma mensagem vinda de um soquete de uma
  * interface de rede. Caso uma mensagem não seja recebida em um certo tempo de
  * Timeout, retorna um valor de TIMEOUT. */
-int recebe_mensagem(mensagem_t msg, int soquete, int timeoutMillis){
-   /* Variáveis de Marcação de Tempo */
-   long long comeco = timestamp();
+int recebe_mensagem(mensagem_t msg, int soquete, int timeoutMillis){ 
    struct timeval timeout = {
       .tv_sec  = timeoutMillis / 1000,
       .tv_usec = (timeoutMillis % 1000) * 1000
@@ -120,14 +122,31 @@ int recebe_mensagem(mensagem_t msg, int soquete, int timeoutMillis){
    setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char*) &timeout, sizeof(timeout));
 
    /* Recebimento de Mensagem com Timeout */
+   unsigned char buffer[132];
+
    int bytes_lidos;
-   do {
-      bytes_lidos = recv(soquete, msg, 132, 0);
-      if (mensagem_valida(msg) == MSG_VALIDA)
-         return bytes_lidos;
-      else if (mensagem_valida(msg) == MSG_ERRO_CHECK)
-         return MSG_ERRO_CHECK;
-   } while (timestamp() - comeco <= timeoutMillis);
+   int total_bytes = 0;
+
+   /* Começo da Marcação de Tempo */
+   long long comeco = timestamp();
+
+   while (total_bytes < 132){
+      if (timestamp() - comeco > timeoutMillis) return MSG_TIMEOUT;
+
+      int bytes_leitura = 132 - total_bytes;
+
+      bytes_lidos = recv(soquete, &buffer[total_bytes], bytes_restantes, 0);
+      if (bytes_lidos > 0){
+         for (int i = total_bytes; i < bytes_lidos; i++)
+            msg[i] = buffer[i];
+         total_bytes += bytes_lidos;
+      }
+   }
+
+   if (total_bytes > 0){
+      int validade = mensagem_valida(msg);
+      return validade;
+   }
 
    return MSG_TIMEOUT;
 }

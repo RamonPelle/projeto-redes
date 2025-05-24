@@ -13,8 +13,11 @@ int main(int argc, char* argv[]) {
    
    /* Primeiro Passo: Vamos criar um Soquete da Interface de Rede! */
    if (argv[2]) soquete = cria_socket(argv[2]);
-   else fprintf(stderr, "Uso: %s (-c|-s) <interface-rede>\n", argv[0]);
-   
+   else { 
+      fprintf(stderr, "Uso: %s (-c|-s) <interface-rede>\n", argv[0]); 
+      exit(-1);
+   }
+
    int opt;
    /* Segundo Passo: Executar sendo CLIENTE ou SERVIDOR! */
    while ((opt = getopt(argc, argv, "cs")) != -1)
