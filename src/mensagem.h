@@ -12,7 +12,8 @@
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /* Definições p/ maior clareza do programa */
-typedef char* mensagem_t;      /* Define a mensagem sendo um vetor de char.  */
+/* Define a mensagem sendo um vetor de char. */
+typedef unsigned char* mensagem_t;
 
 #define ACK           0x00     /* Mensagem ACK                               */
 #define NACK          0x01     /* Mensagem NACK                              */

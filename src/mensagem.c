@@ -1,9 +1,7 @@
-/* Bibliotecas Padrão */
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 
-/* Bibliotecas Locais */
 #include "mensagem.h"
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */

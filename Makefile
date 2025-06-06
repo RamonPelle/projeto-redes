@@ -9,44 +9,48 @@
 # -=-=-=-=-=-=-=-=-=-=-
 # Variáveis do Arquivo
 # -=-=-=-=-=-=-=-=-=-=-
-# Nome do Projeto
-PROJ_NAME=jogo_tesouro
+# Define o compilador C
+CC = gcc
 
-# Diretórios
+# Define os diretórios
 SRC_DIR = src
 BUILD_DIR = build
 
-# Arquivos .c
-C_SOURCE=$(wildcard *.c)
+# Define o nome do executável
+TARGET = jogo_tesouro
 
-# Arquivos .h
-H_SOURCE=$(wildcard *.h)
+# Encontra todos os arquivos .c no diretório SRC_DIR
+SRCS = $(wildcard $(SRC_DIR)/*.c)
 
-# Bibliotecas
-LIB_SOURCE =
+# Cria os caminhos para os arquivos .o no diretório BUILD_DIR
+OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 
-# Objetos
-OBJ=$(C_SOURCE:.c=.o)
+# Flags de compilação
+# -I$(SRC_DIR) adiciona o diretório src para procurar includes (.h)
+# -Wall habilita todos os avisos
+# -g adiciona informações de depuração
+CFLAGS = -I$(SRC_DIR) -Wall -g
 
-# Compilador
-CC=gcc
+# Regra padrão: compila e linka o executável
+all: $(TARGET)
 
-# Flags do Compilador
-CC_FLAGS=-c -Wall -O2 -g
+# Regra para criar o executável
+$(TARGET): $(OBJS)
+	@echo "Ligando arquivos..."
+	$(CC) $(OBJS) -o $(TARGET)
+	@echo "Executável '$(TARGET)' criado com sucesso!"
 
+# Regra para compilar arquivos .c em .o
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(BUILD_DIR) # Garante que o diretório build exista
+	@echo "Compilando $<..."
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# -=-=-=-=-=-=-=-=-=-=-
-# Comandos de Execução
-# -=-=-=-=-=-=-=-=-=-=-
-# all: Compila o projeto
-all: $(PROJ_NAME)
-
-$(PROJ_NAME): $(OBJ)
-	$(CC) -o $@ $^ $(LIB_SOURCE)
-
-%.o: %.c
-	$(CC) $(CC_FLAGS) -o $@ $^
-
-# clean: Remove os arquivos objeto e temporários
+# Regra para limpar os arquivos gerados
 clean:
-	rm -rf *.o $(PROJ_NAME) *~
+	@echo "Limpando a sujeira..."
+	@rm -f $(TARGET)
+	@rm -rf $(BUILD_DIR)
+	@echo "Limpeza completa."
+
+.PHONY: all clean

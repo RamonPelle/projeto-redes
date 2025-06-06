@@ -1,4 +1,3 @@
-/* Bibliotecas Padrão */
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <net/ethernet.h>
