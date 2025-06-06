@@ -253,6 +253,8 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   else if (msg_tipo_cl == FIM_ARQUIVO){
                      /* Fecha o arquivo e exibe na tela... */
                      fclose(novo_arquivo);
+                     printf("       [Y] Tesouro Coletado com Sucesso!\n");
+
                      char* abrir_aqv = (char*) malloc(25 * sizeof(char));
                      strcpy(abrir_aqv, "xdg-open ");
                      strcpy(&abrir_aqv[9], nome_aqv);
@@ -270,6 +272,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   }
                   /* (MR09) Mensagem ERRO */
                   else if (msg_tipo_cl == ERRO){
+                     printf("        [...] Erro. Tesouro Não Coletado.\n");
                      cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
                   }
                }
@@ -412,6 +415,15 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
                      MatrizTabuleiro[coord_jogador.l][coord_jogador.c] = 'P';
 
+                     sleep(1);
+                     system("clear");
+                     imprime_tabuleiro(MatrizTabuleiro, TAM_TABULEIRO);
+
+                     if (num_tesouro == 0)
+                        printf("         [~] Tesouro Não Achado....\n");
+                     else if (num_tesouro > 0)
+                        printf("         [!] Tesouro Achado!\n");
+                     
                      cria_mensagem(msg_enviar, 1, 0, TESOURO, &num_tesouro);
                   }
                   /* (MR02) Mensagem ACK */
@@ -419,6 +431,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      if (MSG_TIPO(msg_anterior) == TESOURO){
                         tsr = Tesouros[num_tesouro - 1];
                         if (tsr.arq_tesouro == NULL){
+                           printf("        [E] Não foi possível abrir o tesouro %d.\n", num_tesouro);
                            unsigned char id_erro = SEM_PERMISSAO_ACESSO;
                            cria_mensagem(msg_enviar, 1, 0, ERRO, &id_erro);
                         }
@@ -467,8 +480,10 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   }
                   /* (MR05) Mensagem ERRO */
                   else if (msg_tipo_sv == ERRO){
-                     if (msg_recebida[5] == ESPACO_INSUFICIENTE)
+                     if (msg_recebida[5] == ESPACO_INSUFICIENTE){
+                        printf("        [E] Espaço Insuficiente para o tesouro %d\n", num_tesouro);
                         cria_mensagem(msg_enviar, 0, 0, FIM_RODADA, NULL);
+                     }
                   }
                }
 
