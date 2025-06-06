@@ -429,17 +429,22 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   /* (MR02) Mensagem ACK */
                   else if (msg_tipo_sv == ACK){
                      if (MSG_TIPO(msg_anterior) == TESOURO){
-                        tsr = Tesouros[num_tesouro - 1];
-                        if (tsr.arq_tesouro == NULL){
-                           printf("        [E] Não foi possível abrir o tesouro %d.\n", num_tesouro);
-                           unsigned char id_erro = SEM_PERMISSAO_ACESSO;
-                           cria_mensagem(msg_enviar, 1, 0, ERRO, &id_erro);
+                        if (num_tesouro > 0){
+                           tsr = Tesouros[num_tesouro - 1];
+                           if (tsr.arq_tesouro == NULL){
+                              printf("        [E] Não foi possível abrir o tesouro %d.\n", num_tesouro);
+                              unsigned char id_erro = SEM_PERMISSAO_ACESSO;
+                              cria_mensagem(msg_enviar, 1, 0, ERRO, &id_erro);
+                           }
+                           else {
+                              struct stat buf_dados;
+                              stat(tsr.arq_tesouro, &buf_dados);
+                              unsigned int tamanho = buf_dados.st_size;
+                              cria_mensagem(msg_enviar, sizeof(long), 0, TAMANHO, (unsigned char*) &tamanho);
+                           }
                         }
-                        else {
-                           struct stat buf_dados;
-                           stat(tsr.arq_tesouro, &buf_dados);
-                           unsigned int tamanho = buf_dados.st_size;
-                           cria_mensagem(msg_enviar, sizeof(long), 0, TAMANHO, (unsigned char*) &tamanho);
+                        else if (num_tesouro == 0){
+                           cria_mensagem(msg_enviar, 0, 0, FIM_RODADA, NULL);
                         }
                      }
                      else if (MSG_TIPO(msg_anterior) == TAMANHO){
