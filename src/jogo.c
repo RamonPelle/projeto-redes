@@ -266,7 +266,8 @@ void jogo_tesouro(int soquete, Usuario usuario)
                    * Mensagem a Enviar: ACK */
                   else if (msg_tipo_cl == TEXTO || msg_tipo_cl == IMAGEM || msg_tipo_cl == VIDEO){
 
-                     printf("        [D] Recebeu ARQUIVO[%d] de tamanho %d\n", MSG_SEQUENCIA(msg_recebida), MSG_TAMANHO(msg_recebida));
+                     printf("        [D] Recebeu ARQUIVO[%d] seq: [%d] de tamanho %d\n", MSG_SEQUENCIA(msg_recebida), sequencia_atual, MSG_TAMANHO(msg_recebida));
+
                      /* Verifica se a sequência está correta...
                       * e adiciona os dados no arquivo... */
                      if (MSG_SEQUENCIA(msg_recebida) == sequencia_atual){
@@ -280,7 +281,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                         sequencia_atual = (sequencia_atual + 1) % 32;
                      }
                      
-                     else if (MSG_SEQUENCIA(msg_recebida) < sequencia_atual){
+                     else if (MSG_SEQUENCIA(msg_recebida) == sequencia_atual - 1 || (MSG_SEQUENCIA(msg_recebida) == 31 && sequencia_atual == 0)){
                         printf("        [D] Envia ACK-ARQUIVO.\n");
                         cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
                      }
