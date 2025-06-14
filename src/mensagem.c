@@ -128,22 +128,28 @@ int recebe_mensagem(mensagem_t msg, int soquete, int timeoutMillis){
    /* Começo da Marcação de Tempo */
    long long comeco = timestamp();
 
-   while (total_bytes < 132){
+   while (1) {
       if (timestamp() - comeco > timeoutMillis) return MSG_TIMEOUT;
+      
+      while (total_bytes < 132){
+         if (timestamp() - comeco > timeoutMillis) return MSG_TIMEOUT;
 
-      int bytes_restantes = 132 - total_bytes;
-
-      bytes_lidos = recv(soquete, &buffer[total_bytes], bytes_restantes, 0);
-      if (bytes_lidos > 0){
-         for (int i = 0; i < bytes_lidos; i++)
+         int bytes_restantes = 132 - total_bytes;
+         
+         bytes_lidos = recv(soquete, &buffer[total_bytes], bytes_restantes, 0);
+         if (bytes_lidos > 0){
+            for (int i = 0; i < bytes_lidos; i++)
             msg[total_bytes + i] = buffer[total_bytes + i];
          total_bytes += bytes_lidos;
+         }
       }
-   }
-
-   if (total_bytes > 0){
-      int validade = mensagem_valida(msg);
-      return validade;
+   
+      if (total_bytes > 0){
+         if (mensagem_valida(msg) == MSG_VALIDA) {
+            return MSG_VALIDA;
+         }
+         continue;
+      }
    }
 
    return MSG_TIMEOUT;
