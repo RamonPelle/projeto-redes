@@ -354,12 +354,14 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   }
                }
                
-               mensagem_invalida = 0;
-
+               
                ultima_msg_nack = (MSG_TIPO(msg_enviar) == NACK) ? 1 : 0;
                if (!ultima_msg_nack) copia_mensagem(msg_enviar, msg_anterior);  
-                 
-               envia_mensagem(msg_enviar, soquete);
+               
+               if (!mensagem_invalida) {
+                  envia_mensagem(msg_enviar, soquete);
+               }
+               mensagem_invalida = 0;
                envia_ou_recebe = ESTADO_RECEBE;
             }
 
@@ -631,12 +633,14 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   }
                }
 
-               mensagem_invalida = 0;
-               
                ultima_msg_nack = (MSG_TIPO(msg_enviar) == NACK) ? 1 : 0;
                if (!ultima_msg_nack) copia_mensagem(msg_enviar, msg_anterior);
+               
+               if (!mensagem_invalida) {
+                  envia_mensagem(msg_enviar, soquete);
+               }
 
-               envia_mensagem(msg_enviar, soquete);
+               mensagem_invalida = 0;
                envia_ou_recebe = ESTADO_RECEBE;
             }
 
