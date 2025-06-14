@@ -365,7 +365,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                validade = recebe_mensagem(msg_recebida, soquete, TEMPO_TIMEOUT);
                
                /* (ST01) Tempo de Timeout Atingido... */
-               if (validade == MSG_TIMEOUT || validade == MSG_INVALIDA){
+               if (validade == MSG_TIMEOUT){
                   reenvia_mensagem = 1;
                }
                /* (ST02) Mensagem Recebida contém Erro... */
@@ -635,7 +635,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                validade = recebe_mensagem(msg_recebida, soquete, TEMPO_TIMEOUT);
 
                /* (ST01) Tempo de Timeout Atingido... */
-               if (validade == MSG_TIMEOUT || validade == MSG_INVALIDA){
+               if (validade == MSG_TIMEOUT){
                   reenvia_mensagem = 1;
                }
                /* (ST02) Mensagem Recebida contém Erro... */
