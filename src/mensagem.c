@@ -130,7 +130,7 @@ int recebe_mensagem(mensagem_t msg, int soquete, int timeoutMillis){
 
    while (1) {
       if (timestamp() - comeco > timeoutMillis) return MSG_TIMEOUT;
-      
+
       while (total_bytes < 132){
          if (timestamp() - comeco > timeoutMillis) return MSG_TIMEOUT;
 
@@ -145,9 +145,10 @@ int recebe_mensagem(mensagem_t msg, int soquete, int timeoutMillis){
       }
    
       if (total_bytes > 0){
-         if (mensagem_valida(msg) == MSG_VALIDA) {
-            return MSG_VALIDA;
+         if (mensagem_valida(msg) != MSG_INVALIDA) {
+            return mensagem_valida(msg);
          }
+
          continue;
       }
    }
