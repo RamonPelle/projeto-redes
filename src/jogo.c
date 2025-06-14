@@ -372,8 +372,10 @@ void jogo_tesouro(int soquete, Usuario usuario)
                }
                /* (ST02) Mensagem Recebida contém Erro... */
                else if (validade == MSG_ERRO_CHECK){
-                  cria_mensagem(msg_enviar, 0, 0, NACK, NULL);
-                  envia_mensagem(msg_enviar, soquete);
+                  mensagem_t msg_nack = malloc(132 * sizeof(unsigned char));
+                  
+                  cria_mensagem(msg_nack, 0, 0, NACK, NULL);
+                  envia_mensagem(msg_nack, soquete);
                }
                
                /* (ST03) Mensagem Recebida está inválida... */
@@ -640,8 +642,10 @@ void jogo_tesouro(int soquete, Usuario usuario)
                }
                /* (ST02) Mensagem Recebida contém Erro... */
                else if (validade == MSG_ERRO_CHECK){
-                  cria_mensagem(msg_enviar, 0, 0, NACK, NULL);
-                  envia_mensagem(msg_enviar, soquete);
+                  mensagem_t msg_nack = malloc(132 * sizeof(unsigned char));
+                  
+                  cria_mensagem(msg_nack, 0, 0, NACK, NULL);
+                  envia_mensagem(msg_nack, soquete);
                }
 
                /* (ST03) Mensagem Recebida está inválida... */
