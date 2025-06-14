@@ -71,6 +71,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
    unsigned char envia_ou_recebe;
    unsigned char reenvia_mensagem;
    unsigned char mensagem_com_erro;
+   unsigned char mensagem_invalida = 0;
 
    char* caminho_aqv = (char*) malloc(16 * sizeof(char));
    unsigned char sequencia_msg;         
@@ -213,7 +214,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
 
                /* (ST03) Mensagem Recebida Confirmada! */
-               else {
+               else if (!mensagem_invalida) {
                   unsigned char msg_tipo_cl = MSG_TIPO(msg_recebida);
 
 
@@ -353,6 +354,8 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   }
                }
                
+               mensagem_invalida = 0;
+
                ultima_msg_nack = (MSG_TIPO(msg_enviar) == NACK) ? 1 : 0;
                if (!ultima_msg_nack) copia_mensagem(msg_enviar, msg_anterior);  
                  
@@ -372,7 +375,12 @@ void jogo_tesouro(int soquete, Usuario usuario)
                else if (validade == MSG_ERRO_CHECK){
                   mensagem_com_erro = 1;
                }
-
+               
+               /* (ST03) Mensagem Recebida está inválida... */
+               else if (validade == MSG_INVALIDA) {
+                  mensagem_invalida = 1;
+               }
+               
                envia_ou_recebe = ESTADO_ENVIA;
             }
          }
@@ -464,7 +472,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
 
                /* (ST03) Mensagem Recebida Confirmada! */
-               else {
+               else if (!mensagem_invalida){
                   msg_tipo_sv = MSG_TIPO(msg_recebida);
                   
 
@@ -623,6 +631,8 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   }
                }
 
+               mensagem_invalida = 0;
+               
                ultima_msg_nack = (MSG_TIPO(msg_enviar) == NACK) ? 1 : 0;
                if (!ultima_msg_nack) copia_mensagem(msg_enviar, msg_anterior);
 
@@ -641,6 +651,11 @@ void jogo_tesouro(int soquete, Usuario usuario)
                /* (ST02) Mensagem Recebida contém Erro... */
                else if (validade == MSG_ERRO_CHECK){
                   mensagem_com_erro = 1;
+               }
+
+               /* (ST03) Mensagem Recebida está inválida... */
+               else if (validade == MSG_INVALIDA) {
+                  mensagem_invalida = 1;
                }
 
                envia_ou_recebe = ESTADO_ENVIA;
