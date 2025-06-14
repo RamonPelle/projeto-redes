@@ -14,7 +14,7 @@
  * Descrição: */
 void imprime_tabuleiro(char** MatrizTabuleiro, int tam)
 {
-   printf("          [Planeta do Tesouro]          \n");
+   printf("\n          [Planeta do Tesouro]          \n");
    printf("   ┌───┬───┬───┬───┬───┬───┬───┬───┐ \n");
 
    for (int i = 0; i < tam; i++) {
@@ -82,7 +82,7 @@ void abre_tesouros(Tesouro_t* Tesouros, int num_tesouros){
 
       strcpy(&local_tesouro[12], "jpg");
       printf("Local do tesouro %d: %s\n", i + 1, local_tesouro);
-      f = fopen(local_tesouro, "r");
+      f = fopen(local_tesouro, "rb");
       if (f){
          Tesouros[i].arq_tesouro = f;
          strcpy(Tesouros[i].nome_tesouro, &local_tesouro[10]);
@@ -90,7 +90,7 @@ void abre_tesouros(Tesouro_t* Tesouros, int num_tesouros){
 
       strcpy(&local_tesouro[12], "mp4");
       printf("Local do tesouro %d: %s\n", i + 1, local_tesouro);
-      f = fopen(local_tesouro, "r");
+      f = fopen(local_tesouro, "rb");
       if (f){
          Tesouros[i].arq_tesouro = f;
          strcpy(Tesouros[i].nome_tesouro, &local_tesouro[10]);
@@ -98,7 +98,7 @@ void abre_tesouros(Tesouro_t* Tesouros, int num_tesouros){
 
       strcpy(&local_tesouro[12], "txt");
       printf("Local do tesouro %d: %s\n", i + 1, local_tesouro);
-      f = fopen(local_tesouro, "r");
+      f = fopen(local_tesouro, "rb");
       if (f){
          Tesouros[i].arq_tesouro = f;
          strcpy(Tesouros[i].nome_tesouro, &local_tesouro[10]);

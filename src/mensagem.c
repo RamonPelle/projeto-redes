@@ -135,8 +135,8 @@ int recebe_mensagem(mensagem_t msg, int soquete, int timeoutMillis){
 
       bytes_lidos = recv(soquete, &buffer[total_bytes], bytes_restantes, 0);
       if (bytes_lidos > 0){
-         for (int i = total_bytes; i < bytes_lidos; i++)
-            msg[i] = buffer[i];
+         for (int i = 0; i < bytes_lidos; i++)
+            msg[total_bytes + i] = buffer[total_bytes + i];
          total_bytes += bytes_lidos;
       }
    }

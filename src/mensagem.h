@@ -18,7 +18,7 @@ typedef unsigned char* mensagem_t;
 #define ACK           0x00     /* Mensagem ACK                               */
 #define NACK          0x01     /* Mensagem NACK                              */
 #define OK            0x02     /* Mensagem OK + ACK                          */
-#define TESOURO       0x03     /* Mensagem TESOURO                           */
+#define LIVRE01       0x03     /* Mensagem LIVRE 01                          */
 #define TAMANHO       0x04     /* Mensagem TAMANHO                           */
 #define DADOS         0x05     /* Mensagem DADOS                             */
 #define TEXTO         0x06     /* Mensagem TEXTO + ACK                       */
@@ -29,7 +29,7 @@ typedef unsigned char* mensagem_t;
 #define MV_CM         0x0B     /* Mensagem MOVIMENTO CIMA                    */
 #define MV_BX         0x0C     /* Mensagem MOVIMENTO BAIXO                   */
 #define MV_EQ         0x0D     /* Mensagem MOVIMENTO ESQUERDA                */
-#define FIM_RODADA    0x0E     /* Mensagem FIM_RODADA                        */
+#define LIVRE02       0x0E     /* Mensagem LIVRE02                           */
 #define ERRO          0x0F     /* Mensagem ERRO                              */
 
 #define SEM_PERMISSAO_ACESSO 0 /* ERR01: Não foi possível abrir o arquivo.   */
