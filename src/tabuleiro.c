@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <time.h>
 
 #include "tabuleiro.h"
@@ -15,7 +16,10 @@
 void imprime_tabuleiro(char** MatrizTabuleiro, int tam)
 {
    printf("\n          [Planeta do Tesouro]          \n");
+   usleep(300000);
+
    printf("   ┌───┬───┬───┬───┬───┬───┬───┬───┐ \n");
+   usleep(300000);
 
    for (int i = 0; i < tam; i++) {
       printf(" %d ", tam - i - 1);
@@ -23,10 +27,12 @@ void imprime_tabuleiro(char** MatrizTabuleiro, int tam)
          printf("│ %c ", MatrizTabuleiro[i][j]);
       printf("│\n");
       if (i != tam - 1) printf("   ├───┼───┼───┼───┼───┼───┼───┼───┤ \n");
+      usleep(300000);
    }
    
    printf("   └───┴───┴───┴───┴───┴───┴───┴───┘ \n"
           "     0   1   2   3   4   5   6   7   \n");
+   usleep(300000);
 }
 
 /* [Função] inicia_tabuleiro()
@@ -81,7 +87,6 @@ void abre_tesouros(Tesouro_t* Tesouros, int num_tesouros){
       abrindo_tesouro[19] = 49 + i;
 
       strcpy(&local_tesouro[12], "jpg");
-      printf("Local do tesouro %d: %s\n", i + 1, local_tesouro);
       f = fopen(local_tesouro, "rb");
       if (f){
          Tesouros[i].arq_tesouro = f;
@@ -89,7 +94,6 @@ void abre_tesouros(Tesouro_t* Tesouros, int num_tesouros){
       }
 
       strcpy(&local_tesouro[12], "mp4");
-      printf("Local do tesouro %d: %s\n", i + 1, local_tesouro);
       f = fopen(local_tesouro, "rb");
       if (f){
          Tesouros[i].arq_tesouro = f;
@@ -97,14 +101,11 @@ void abre_tesouros(Tesouro_t* Tesouros, int num_tesouros){
       }
 
       strcpy(&local_tesouro[12], "txt");
-      printf("Local do tesouro %d: %s\n", i + 1, local_tesouro);
       f = fopen(local_tesouro, "rb");
       if (f){
          Tesouros[i].arq_tesouro = f;
          strcpy(Tesouros[i].nome_tesouro, &local_tesouro[10]);
       }
-
-      printf("Conseguiu abrir o arquivo %s? %s\n", Tesouros[i].nome_tesouro, (Tesouros[i].arq_tesouro) ? "SIM" : "NÃO");
    }
 }
 

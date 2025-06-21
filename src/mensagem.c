@@ -138,18 +138,20 @@ int recebe_mensagem(mensagem_t msg, int soquete, int timeoutMillis){
          
          bytes_lidos = recv(soquete, &buffer[total_bytes], bytes_restantes, 0);
          if (bytes_lidos > 0){
-            for (int i = 0; i < bytes_lidos; i++)
-            msg[total_bytes + i] = buffer[total_bytes + i];
-         total_bytes += bytes_lidos;
+            for (int i = 0; i < bytes_lidos && (i + total_bytes) < 132; i++)
+               msg[total_bytes + i] = buffer[total_bytes + i];
+            total_bytes += bytes_lidos;
          }
       }
    
       if (total_bytes > 0){
-         if (mensagem_valida(msg) != MSG_INVALIDA) {
-            return mensagem_valida(msg);
-         }
+         if (mensagem_valida(msg) == MSG_INVALIDA)
+            continue;
+         
+         if (mensagem_valida(msg) == MSG_ERRO_CHECK && (MSG_TIPO(msg) == ACK || MSG_TIPO(msg) == NACK))
+            continue;
 
-         continue;
+         return mensagem_valida(msg);
       }
    }
 

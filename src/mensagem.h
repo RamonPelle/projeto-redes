@@ -32,8 +32,8 @@ typedef unsigned char* mensagem_t;
 #define LIVRE02       0x0E     /* Mensagem LIVRE02                           */
 #define ERRO          0x0F     /* Mensagem ERRO                              */
 
-#define SEM_PERMISSAO_ACESSO 0 /* ERR01: Não foi possível abrir o arquivo.   */
-#define ESPACO_INSUFICIENTE  1 /* ERRO2: Espaço suficiente para o arquivo.   */
+#define SEM_PERMISSAO_ACESSO 1 /* ERR01: Não foi possível abrir o arquivo.   */
+#define ESPACO_INSUFICIENTE  2 /* ERRO2: Espaço suficiente para o arquivo.   */
 
 #define MSG_VALIDA      1      /* Mensagem Válida.                           */
 #define MSG_INVALIDA    0      /* Mensagem Inválida.                         */
