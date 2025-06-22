@@ -92,7 +92,8 @@ void jogo_tesouro(int soquete, Usuario usuario)
    unsigned char estados[6];
 
    char* caminho_aqv = (char*) malloc(16 * sizeof(char));
-   unsigned char sequencia_atual;         
+   unsigned char sequencia_atual;
+   unsigned char sequencia_anterior;
    unsigned char buffer[127];
    
    mensagem_t msg_enviar   = (mensagem_t) malloc(132 * sizeof(unsigned char));
@@ -186,6 +187,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
          unsigned int tem_tesouro;
          unsigned char erro_tamanho;
          sequencia_atual = 0;
+         sequencia_anterior = 0;
 
          while (1){
             /* (1) Cliente ENVIA uma Mensagem 
@@ -262,14 +264,11 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      CL_PROCESSA_FIM(estados) = 1;
                   }
 
-                  else {
-                     printf(" ERRO (%d): O bolo solou... :(\n", MSG_TIPO(msg_recebida));
-                  }
                }
 
                /* (MR03) Mensagem DADOS 
                   * Mensagem a Enviar: ACK */
-               else if (CL_PROCESSA_DADOS(estados)){
+               else if (CL_PROCESSA_DADOS(estados) && MSG_TIPO(msg_recebida) == DADOS){
 
                   /* Abre o arquivo a transferir... */
                   printf("        [N] Nome do Tesouro: %s\n", &msg_recebida[5]);
@@ -295,10 +294,9 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   }
 
                   else if (MSG_SEQUENCIA(msg_recebida) == sequencia_atual){
-
                      fwrite((void*) &msg_recebida[5], MSG_TAMANHO(msg_recebida), 1, novo_arquivo);
+                     sequencia_anterior = sequencia_atual;
                      sequencia_atual = (sequencia_atual + 1) % 32;
-
                   }
 
                }
@@ -343,10 +341,9 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
                else if (msg_tipo_cl == DADOS)
                   cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
-
-               else if (msg_tipo_cl == TEXTO)
-                  cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
-                  
+               else if (msg_tipo_cl == TEXTO){
+                  cria_mensagem(msg_enviar, 0, sequencia_anterior, ACK, NULL);
+               }
                else if (msg_tipo_cl == ERRO)
                   cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
                   
@@ -523,7 +520,6 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
                   /* (MR02) Mensagem ACK */
                   else if (msg_tipo_sv == ACK){
-
                      /* (ACK01) Mandou TESOURO -> Envia TAMANHO ou FIM_RODADA */
                      if (MSG_TIPO(msg_anterior) == OK){
                         /* Tesouro encontrado -> Envia o Tamanho do Tesouro. */
@@ -560,7 +556,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
                      /* (ACK02) Mandou TAMANHO -> Envia DADOS */
                      else if (MSG_TIPO(msg_anterior) == TAMANHO){
-                        cria_mensagem(msg_enviar, 6, 0, DADOS, (unsigned char*) tsr.nome_tesouro);
+                        cria_mensagem(msg_enviar, strlen(tsr.nome_tesouro) + 1, 0, DADOS, (unsigned char*) tsr.nome_tesouro);
                      }
 
                      /* (ACK03) Mandou DADOS -> Envia TEXTO ou IMAGEM ou VIDEO */
@@ -580,17 +576,21 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      /* (ACK04) Mandou TEXTO, IMAGEM ou VIDEO -> Envia TEXTO, IMAGEM, VIDEO ou FIM_ARQUIVO */
                      else if (MSG_TIPO(msg_anterior) == TEXTO || MSG_TIPO(msg_anterior) == IMAGEM || MSG_TIPO(msg_anterior) == VIDEO){
                         /* Atualiza o número da sequência do arquivo, para controle de fluxo. */
-                        sequencia_msg = (sequencia_msg + 1) % 32;
-
-                        /* Se o Arquivo foi completamente lido, avisa que o Arquivo acabou.
-                         * Se não, continua lendo do arquivo. */
-                        bytes_lidos = fread(buffer, 1, 127, tsr.arq_tesouro);
-                        if (bytes_lidos > 0){
+                        if (MSG_SEQUENCIA(msg_recebida) == sequencia_msg){
+                           sequencia_msg = (sequencia_msg + 1) % 32;
+                           
+                           /* Se o Arquivo foi completamente lido, avisa que o Arquivo acabou.
+                           * Se não, continua lendo do arquivo. */
+                           bytes_lidos = fread(buffer, 1, 127, tsr.arq_tesouro);
+                           if (bytes_lidos > 0){
+                              cria_mensagem(msg_enviar, bytes_lidos, sequencia_msg, TEXTO, buffer);
+                           }
+                           else {
+                              cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
+                              movimento_processado = 0;
+                           }
+                        } else {
                            cria_mensagem(msg_enviar, bytes_lidos, sequencia_msg, TEXTO, buffer);
-                        }
-                        else {
-                           cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
-                           movimento_processado = 0;
                         }
                      }
 
