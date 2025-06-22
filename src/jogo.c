@@ -604,10 +604,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
                   /* (MR03) Mensagem NACK */
                   else if (msg_tipo_sv == NACK){
-                     if (ultima_msg_nack)
-                        cria_mensagem(msg_enviar, 0, 0, NACK, NULL);
-                     else
-                        copia_mensagem(msg_anterior, msg_enviar);
+                     cria_mensagem(msg_enviar, bytes_lidos, sequencia_msg, MSG_TIPO(msg_anterior), buffer);
                   }
 
 
