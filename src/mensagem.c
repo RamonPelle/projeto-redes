@@ -44,7 +44,8 @@ int cria_mensagem(mensagem_t msg, unsigned char tam_dados, unsigned char seq,
    for (int i = 5 + tam_dados; i < 132; i++)
       msg[i] = 0;
 
-   MSG_CHECKSUM(msg) = calcula_checksum(msg);
+   char testeck = calcula_checksum(msg) * -1;
+   MSG_CHECKSUM(msg) = (unsigned char) testeck;
 
    return 0;
 }
@@ -77,11 +78,11 @@ int mensagem_valida(mensagem_t msg)
    if (MSG_SEQUENCIA(msg) > 31) return MSG_INVALIDA;
 
    /* (2) Verifica o CHECKSUM da Mensagem:
-    * - Calcula o Checksum da Mensagem recebida 
+    * - Calcula o Checksum da Mensagem recebida
     * - Checksum calculado é diferente do recebido? ZERO. */
    unsigned char chcksm;
    chcksm = calcula_checksum(msg);
-   if (chcksm != MSG_CHECKSUM(msg)) return MSG_ERRO_CHECK;
+   if (chcksm + MSG_CHECKSUM(msg) != 0) return MSG_ERRO_CHECK;
 
    return MSG_VALIDA;
 }
