@@ -429,7 +429,6 @@ void jogo_tesouro(int soquete, Usuario usuario)
          unsigned char movimento_processado = 0;
          unsigned char ultima_msg_nack = 0;
 
-
          cria_mensagem(msg_anterior, 0, 0, LIVRE01, NULL);
 
          while (1){
@@ -619,8 +618,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   }
                }
 
-               ultima_msg_nack = (MSG_TIPO(msg_enviar) == NACK) ? 1 : 0;
-               if (!ultima_msg_nack) copia_mensagem(msg_enviar, msg_anterior);
+               copia_mensagem(msg_enviar, msg_anterior);
                
                if (!mensagem_invalida) {
                   envia_mensagem(msg_enviar, soquete);
@@ -644,6 +642,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   
                   cria_mensagem(msg_nack, 0, 0, NACK, NULL);
                   envia_mensagem(msg_nack, soquete);
+                  free(msg_nack);
                }
 
                /* (ST03) Mensagem Recebida está inválida... */
