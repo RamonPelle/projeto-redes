@@ -77,7 +77,7 @@ int mensagem_valida(mensagem_t msg)
    if (MSG_SEQUENCIA(msg) > 31) return MSG_INVALIDA;
 
    /* (2) Verifica o CHECKSUM da Mensagem:
-    * - Calcula o Checksum da Mensagem recebida
+    * - Calcula o Checksum da Mensagem recebida 
     * - Checksum calculado é diferente do recebido? ZERO. */
    unsigned char chcksm;
    chcksm = calcula_checksum(msg);
@@ -91,11 +91,20 @@ int mensagem_valida(mensagem_t msg)
  * retorna um valor de erro. */
 int envia_mensagem(mensagem_t msg, int soquete)
 {
-   int bytes_enviados;
-
    if (mensagem_valida(msg) == MSG_VALIDA){
-      bytes_enviados = send(soquete, msg, 132, 0);
-      return bytes_enviados;
+      int total_bytes = 0;
+      int bytes_restantes = 132;
+      int bytes_enviados;
+
+      while (total_bytes < 132){
+         bytes_enviados = send(soquete, msg + total_bytes, bytes_restantes, 0);
+         if (bytes_enviados < 0) return -1;
+
+         total_bytes += bytes_enviados;
+         bytes_restantes -= bytes_enviados;
+      }
+
+      return total_bytes;
    } else {
       return -1;
    }
@@ -144,14 +153,9 @@ int recebe_mensagem(mensagem_t msg, int soquete, int timeoutMillis){
          }
       }
    
-      if (total_bytes > 0){
-         if (mensagem_valida(msg) == MSG_INVALIDA)
-            continue;
-         
-         if (mensagem_valida(msg) == MSG_ERRO_CHECK && (MSG_TIPO(msg) == ACK || MSG_TIPO(msg) == NACK))
-            continue;
-
-         return mensagem_valida(msg);
+      if (total_bytes > 0){        
+         if (mensagem_valida(msg) == MSG_VALIDA || mensagem_valida(msg) == MSG_ERRO_CHECK)
+            return mensagem_valida(msg);
       }
    }
 

@@ -10,10 +10,10 @@
 #include "mensagem.h"
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-#define NUM_TESOUROS  8
-#define TAM_TABULEIRO 8
-#define TEMPO_TIMEOUT 1000
-#define DEBUG         1
+#define NUM_TESOUROS    8
+#define TAM_TABULEIRO   8
+#define TIMEOUT_INICIAL 1000
+#define DEBUG           1
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 /* - - - - - - - - - - - - - ESTADOS DO CLIENTE  - - - - - - - - - - - - - - */
@@ -55,7 +55,8 @@ void liberaMatriz(char** M, int tam_matriz)
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 unsigned char d = DEBUG;
-
+unsigned char num_timeouts = 0;
+int tempo_timeout = TIMEOUT_INICIAL;
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 /*                               Execução do                                 */
 /*                             Jogo do Tesouro                               */
@@ -93,7 +94,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
    char* caminho_aqv = (char*) malloc(16 * sizeof(char));
    unsigned char sequencia_atual;
-   unsigned char sequencia_anterior;
+   unsigned char sequencia_anterior;         
    unsigned char buffer[127];
    
    mensagem_t msg_enviar   = (mensagem_t) malloc(132 * sizeof(unsigned char));
@@ -187,7 +188,6 @@ void jogo_tesouro(int soquete, Usuario usuario)
          unsigned int tem_tesouro;
          unsigned char erro_tamanho;
          sequencia_atual = 0;
-         sequencia_anterior = 0;
 
          while (1){
             /* (1) Cliente ENVIA uma Mensagem 
@@ -249,19 +249,19 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
                      erro_tamanho = (tamanho_tesouro > (buf.f_bavail * buf.f_bsize)) ? ESPACO_INSUFICIENTE : 0;
 
-                     CL_PROCESSA_BOLO(estados) = 0;
+                     CL_PROCESSA_BOLO(estados)  = 0;
                      CL_PROCESSA_DADOS(estados) = 1;
                   }
 
                   else if (MSG_TIPO(msg_recebida) == ERRO){
                      printf("        [E] Erro. Tesouro Não Coletado.\n");
                      CL_PROCESSA_BOLO(estados) = 0;
-                     CL_PROCESSA_FIM(estados) = 1;
+                     CL_PROCESSA_FIM(estados)  = 1;
                   }
                   
                   else if (MSG_TIPO(msg_recebida) == FIM_ARQUIVO){
                      CL_PROCESSA_BOLO(estados) = 0;
-                     CL_PROCESSA_FIM(estados) = 1;
+                     CL_PROCESSA_FIM(estados)  = 1;
                   }
 
                }
@@ -303,7 +303,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
                /* (MR05) Mensagem FIM_ARQUIVO 
                   * Mensagem a Enviar: MOVIMENTO */
-               else if (CL_PROCESSA_FIM(estados)){
+               if (CL_PROCESSA_FIM(estados)){
 
                   /* Fecha o arquivo e exibe na tela... */
                   if (tem_tesouro){
@@ -327,29 +327,44 @@ void jogo_tesouro(int soquete, Usuario usuario)
                /* Calcula a próxima mensagem a enviar, e a envia. */
                unsigned char msg_tipo_cl = MSG_TIPO(msg_recebida);
 
-               if (msg_tipo_cl == OK)
+               if (msg_tipo_cl == OK){
+                  if (d) printf("        [D] Envia ACK-OK.\n");
                   cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
-               
+               }
+
                else if (msg_tipo_cl == TAMANHO){
-                  if (erro_tamanho == 0)
+                  if (erro_tamanho == 0){
+                     if (d) printf("        [D] Envia ACK-TAMANHO.\n");
                      cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
+                  }
                   else if (erro_tamanho == ESPACO_INSUFICIENTE){
+                     if (d) printf("        [D] Envia ERRO (Espaço).\n");
                      cria_mensagem(msg_enviar, 1, 0, ERRO, &erro_tamanho);
                      copia_mensagem(msg_enviar, msg_anterior);
                   }
                }
 
-               else if (msg_tipo_cl == DADOS)
+               else if (msg_tipo_cl == DADOS){
+                  if (d) printf("        [D] Envia ACK-DADOS.\n");
                   cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
+               }
+
                else if (msg_tipo_cl == TEXTO){
+                  if (d) printf("        [D] Envia ACK-ARQUIVO [%d].\n", sequencia_anterior);
                   cria_mensagem(msg_enviar, 0, sequencia_anterior, ACK, NULL);
                }
-               else if (msg_tipo_cl == ERRO)
+
+               else if (msg_tipo_cl == ERRO){
+                  if (d) printf("        [D] Envia ACK-ERRO.\n");
                   cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
-                  
-               else if (msg_tipo_cl == NACK)
-                  copia_mensagem(msg_anterior, msg_enviar);
-                  
+               }
+
+               //else if (msg_tipo_cl == NACK){
+               //   if (d) printf("        [D] Envia MENSAGEM ANTERIOR (Nack).\n");
+               //   if (MSG_TIPO(msg_anterior) != ACK) 
+               //      copia_mensagem(msg_anterior, msg_enviar);
+               //}
+               
                envia_mensagem(msg_enviar, soquete);
 
                envia_ou_recebe = ESTADO_RECEBE;
@@ -358,26 +373,39 @@ void jogo_tesouro(int soquete, Usuario usuario)
             
             /* (2) Cliente RECEBE uma Mensagem */
             else if (envia_ou_recebe == ESTADO_RECEBE){
-
-               validade = recebe_mensagem(msg_recebida, soquete, TEMPO_TIMEOUT);
+               validade = recebe_mensagem(msg_recebida, soquete, tempo_timeout);
 
                /* (ST01) Timeout atingido... */
                if (validade == MSG_TIMEOUT){
-                  if (d) printf("        [D] TIMEOUT. Reenviando...\n");
+                  num_timeouts++;
+                  if (num_timeouts > 30){
+                     fprintf(stderr, "Não foi possível continuar a conexão. Conexão finalizada...\n");
+                     exit(-1);
+                  }
+
+                  tempo_timeout = tempo_timeout + 1000;
+
+                  if (d) printf("        [D] TIMEOUT. Reenvia [0x%02x] e Espera [%ds]...\n", MSG_TIPO(msg_anterior), tempo_timeout / 1000);
                   if (MSG_TIPO(msg_enviar) != ACK && MSG_TIPO(msg_enviar) != NACK)
                      envia_mensagem(msg_anterior, soquete);
                }
 
                /* (ST02) Mensagem Recebida contém Erro... */
                else if (validade == MSG_ERRO_CHECK){
-                  if (d) printf("        [D] Mensagem com Erro...\n");
+                  if (d) printf("        [D] Mensagem [0x%02x] com Erro...\n", MSG_TIPO(msg_recebida));
                   cria_mensagem(msg_enviar, 0, 0, NACK, NULL);
                   envia_mensagem(msg_enviar, soquete);
+
+                  num_timeouts    = 0;
+                  tempo_timeout   = TIMEOUT_INICIAL;
                }
                
                /* (ST03) Mensagem Recebida Válida! */
-               else envia_ou_recebe = ESTADO_ENVIA;
-
+               else {
+                  num_timeouts    = 0;
+                  tempo_timeout   = TIMEOUT_INICIAL;
+                  envia_ou_recebe = ESTADO_ENVIA;
+               }
             }
          }
 
@@ -409,27 +437,24 @@ void jogo_tesouro(int soquete, Usuario usuario)
          /* - - - - - - = = = = = = = = = = = = = = = = - - - - - - */
          /*             - = Transmissão de Mensagens  = -           */
          /* - - - - - - = = = = = = = = = = = = = = = = - - - - - - */
-         int reenvia_mensagem;
-         int mensagem_com_erro;
-         int sequencia_msg;
-         int mensagem_invalida;
-
-         /* Inicializa as Flags e Variáveis */
-         reenvia_mensagem    = 0;
-         mensagem_com_erro   = 0;
-         
-         envia_ou_recebe     = ESTADO_RECEBE;
-         sequencia_msg       = 0;
          
          /* Flags de Controle específicas do Servidor... */
          Tesouro_t tsr;
          unsigned char msg_tipo_sv;
          unsigned char num_tesouro;
          unsigned char bytes_lidos;
-         unsigned char movimento_processado = 0;
-         unsigned char ultima_msg_nack = 0;
+         unsigned char id_erro;
 
-         cria_mensagem(msg_anterior, 0, 0, LIVRE01, NULL);
+         unsigned long tamanho;
+
+         /* Inicializa as Flags e Variáveis */
+         envia_ou_recebe     = ESTADO_RECEBE;
+         sequencia_atual     = 0;
+
+         cria_mensagem(msg_enviar, 0, 0, LIVRE01, NULL);
+         copia_mensagem(msg_enviar, msg_anterior);
+
+         SV_PROCESSA_MOVIMENTO(estados) = 1;
 
          while (1){
             /* (1) Servidor ENVIA uma Mensagem 
@@ -457,217 +482,274 @@ void jogo_tesouro(int soquete, Usuario usuario)
              * ERRO       | FIM_ARQUIVO        
              * ---------------------------------------------- */
             if (envia_ou_recebe == ESTADO_ENVIA){
+   
+               /* (MR01) Mensagem MOVIMENTO */
+               if (SV_PROCESSA_MOVIMENTO(estados) && (MSG_TIPO(msg_recebida) == MV_BX || MSG_TIPO(msg_recebida) == MV_CM || 
+                   MSG_TIPO(msg_recebida) == MV_EQ || MSG_TIPO(msg_recebida) == MV_DI)){
+                  int coord_x_anterior = TAM_TABULEIRO - 1 - coord_jogador.l;
+                  int coord_y_anterior = coord_jogador.c;
 
-               /* (ST03) Mensagem Recebida Confirmada! */
-               if (!mensagem_invalida){
-                  msg_tipo_sv = MSG_TIPO(msg_recebida);
+                  MatrizTabuleiro[coord_jogador.l][coord_jogador.c] = '*';
                   
+                  /* Processa o Movimento */
+                  switch( MSG_TIPO(msg_recebida) ){
+                     case MV_BX:
+                        coord_jogador.l++; break;
+                     case MV_CM:
+                        coord_jogador.l--; break;
+                     case MV_EQ:
+                        coord_jogador.c--; break;
+                     case MV_DI:
+                        coord_jogador.c++; break;
+                     default: break;
+                  }
+                  /* Corrige Posição do Jogador */
+                  if (coord_jogador.l < 0)              coord_jogador.l = 0;
+                  if (coord_jogador.l == TAM_TABULEIRO) coord_jogador.l = TAM_TABULEIRO - 1;
+                  if (coord_jogador.c < 0)              coord_jogador.c = 0;
+                  if (coord_jogador.c == TAM_TABULEIRO) coord_jogador.c = TAM_TABULEIRO - 1;
 
-                  /* (MR01) Mensagem MOVIMENTO */
-                  if (msg_tipo_sv == MV_BX || msg_tipo_sv == MV_CM || msg_tipo_sv == MV_EQ || msg_tipo_sv == MV_DI){
-                     if (!movimento_processado){
-                        int coord_x_anterior = TAM_TABULEIRO - 1 - coord_jogador.l;
-                        int coord_y_anterior = coord_jogador.c;
+                  num_tesouro = 0;
 
-                        MatrizTabuleiro[coord_jogador.l][coord_jogador.c] = '*';
-                        
-                        /* Processa o Movimento */
-                        switch(msg_tipo_sv){
-                           case MV_BX:
-                              coord_jogador.l++; break;
-                           case MV_CM:
-                              coord_jogador.l--; break;
-                           case MV_EQ:
-                              coord_jogador.c--; break;
-                           case MV_DI:
-                              coord_jogador.c++; break;
-                           default: break;
-                        }
-                        /* Corrige Posição do Jogador */
-                        if (coord_jogador.l < 0)              coord_jogador.l = 0;
-                        if (coord_jogador.l == TAM_TABULEIRO) coord_jogador.l = TAM_TABULEIRO - 1;
-                        if (coord_jogador.c < 0)              coord_jogador.c = 0;
-                        if (coord_jogador.c == TAM_TABULEIRO) coord_jogador.c = TAM_TABULEIRO - 1;
-
-                        num_tesouro = 0;
-
-                        if (MatrizTabuleiro[coord_jogador.l][coord_jogador.c] >= '1' && 
-                           MatrizTabuleiro[coord_jogador.l][coord_jogador.c] <= '8'){
-                              num_tesouro = MatrizTabuleiro[coord_jogador.l][coord_jogador.c] - 48;
-                        }
-
-                        MatrizTabuleiro[coord_jogador.l][coord_jogador.c] = 'P';
-
-                        sleep(1);
-                        system("clear");
-                        imprime_tabuleiro(MatrizTabuleiro, TAM_TABULEIRO);
-
-                        printf("        [M] Movimento do Jogador: (%d, %d) -> ", coord_x_anterior, coord_y_anterior);
-                        printf("(%d, %d)\n", TAM_TABULEIRO - 1 - coord_jogador.l, coord_jogador.c);
-
-                        if (num_tesouro == 0)
-                           printf("        [~] Tesouro Não Achado....\n");
-                        else if (num_tesouro > 0)
-                           printf("        [!] Tesouro Achado em (%d, %d)!\n", TAM_TABULEIRO - 1 - coord_jogador.l, coord_jogador.c);
-                        
-                        movimento_processado = 1;
-                     }
-
-                     cria_mensagem(msg_enviar, 1, 0, OK, &num_tesouro);
+                  if (MatrizTabuleiro[coord_jogador.l][coord_jogador.c] >= '1' && 
+                     MatrizTabuleiro[coord_jogador.l][coord_jogador.c] <= '8'){
+                        num_tesouro = MatrizTabuleiro[coord_jogador.l][coord_jogador.c] - 48;
                   }
 
+                  MatrizTabuleiro[coord_jogador.l][coord_jogador.c] = 'P';
 
-                  /* (MR02) Mensagem ACK */
-                  else if (msg_tipo_sv == ACK){
-                     /* (ACK01) Mandou TESOURO -> Envia TAMANHO ou FIM_RODADA */
-                     if (MSG_TIPO(msg_anterior) == OK){
-                        /* Tesouro encontrado -> Envia o Tamanho do Tesouro. */
-                        if (num_tesouro != 0){       
-                           tsr = Tesouros[num_tesouro - 1];
-                           /* Não foi possível abrir o arquivo -> Erro. */
-                           if (tsr.arq_tesouro == NULL){
-                              printf("        [E] Não foi possível abrir o tesouro %d.\n", num_tesouro);
-                              unsigned char id_erro = SEM_PERMISSAO_ACESSO;
-                              cria_mensagem(msg_enviar, 1, 0, ERRO, &id_erro);
-                           }
-                           /* Arquivo está aberto -> Envia o Tamanho. */
-                           else {
-                              printf("        [N] Nome do Tesouro: %s\n", tsr.nome_tesouro);
+                  sleep(1);
+                  system("clear");
+                  imprime_tabuleiro(MatrizTabuleiro, TAM_TABULEIRO);
 
-                              struct stat buf_dados;
-                              strcpy(caminho_aqv, "./objetos/");
-                              strcpy(&caminho_aqv[10], tsr.nome_tesouro);
+                  printf("        [M] Movimento do Jogador: (%d, %d) -> ", coord_x_anterior, coord_y_anterior);
+                  printf("(%d, %d)\n", TAM_TABULEIRO - 1 - coord_jogador.l, coord_jogador.c);
 
-                              stat(caminho_aqv, &buf_dados);
-                              unsigned long tamanho = buf_dados.st_size;
+                  if (num_tesouro == 0)
+                     printf("        [~] Tesouro Não Achado....\n");
+                  else if (num_tesouro > 0)
+                     printf("        [!] Tesouro Achado em (%d, %d)!\n", TAM_TABULEIRO - 1 - coord_jogador.l, coord_jogador.c);
+                  
+                  SV_PROCESSA_MOVIMENTO(estados) = 0;
+                  SV_MONTA_TAMANHO_SV(estados)   = 1;
+               }
 
-                              printf("        [B] Tamanho do Tesouro: %lu B\n", tamanho);
-                              cria_mensagem(msg_enviar, sizeof(unsigned long), 0, TAMANHO, (unsigned char*) &tamanho);
-                           }
+               /* (MR02) Mensagem ACK */
+               else if (MSG_TIPO(msg_recebida) == ACK){
+
+                  /* (ACK01) Mandou TESOURO -> Envia TAMANHO ou FIM_RODADA */
+                  if (SV_MONTA_TAMANHO_SV(estados) && MSG_TIPO(msg_anterior) == OK){
+
+                     /* Tesouro encontrado -> Envia o Tamanho do Tesouro. */
+                     if (num_tesouro != 0){       
+
+                        tsr = Tesouros[num_tesouro - 1];
+
+                        /* Não foi possível abrir o arquivo -> Erro. */
+                        if (tsr.arq_tesouro == NULL){
+                           id_erro = SEM_PERMISSAO_ACESSO;
+                           printf("        [E] Não foi possível abrir o tesouro %d.\n", num_tesouro);
+
+                           SV_MONTA_ERRO(estados) = 1;
                         }
 
-                        /* Tesouro NÃO encontrado -> Acaba Rodada. */
-                        else { 
-                           cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
-                           movimento_processado = 0;
-                        }
-                     }
-
-                     /* (ACK02) Mandou TAMANHO -> Envia DADOS */
-                     else if (MSG_TIPO(msg_anterior) == TAMANHO){
-                        cria_mensagem(msg_enviar, strlen(tsr.nome_tesouro) + 1, 0, DADOS, (unsigned char*) tsr.nome_tesouro);
-                     }
-
-                     /* (ACK03) Mandou DADOS -> Envia TEXTO ou IMAGEM ou VIDEO */
-                     else if (MSG_TIPO(msg_anterior) == DADOS){
-                        sequencia_msg = 0;
-
-                        bytes_lidos = fread(buffer, 1, 127, tsr.arq_tesouro);
-                        if (bytes_lidos > 0){
-                           cria_mensagem(msg_enviar, bytes_lidos, sequencia_msg, TEXTO, buffer);
-                        }
+                        /* Arquivo está aberto -> Envia o Tamanho. */
                         else {
-                           cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
-                           movimento_processado = 0;
+                           id_erro = 0;
+
+                           printf("        [N] Nome do Tesouro: %s\n", tsr.nome_tesouro);
+
+                           struct stat buf_dados;
+                           strcpy(caminho_aqv, "./objetos/");
+                           strcpy(&caminho_aqv[10], tsr.nome_tesouro);
+
+                           stat(caminho_aqv, &buf_dados);
+                           tamanho = buf_dados.st_size;
+
+                           printf("        [B] Tamanho do Tesouro: %lu B\n", tamanho);
+
+                           SV_MONTA_DADOS(estados) = 1;
                         }
                      }
 
-                     /* (ACK04) Mandou TEXTO, IMAGEM ou VIDEO -> Envia TEXTO, IMAGEM, VIDEO ou FIM_ARQUIVO */
-                     else if (MSG_TIPO(msg_anterior) == TEXTO || MSG_TIPO(msg_anterior) == IMAGEM || MSG_TIPO(msg_anterior) == VIDEO){
-                        /* Atualiza o número da sequência do arquivo, para controle de fluxo. */
-                        if (MSG_SEQUENCIA(msg_recebida) == sequencia_msg){
-                           sequencia_msg = (sequencia_msg + 1) % 32;
-                           
-                           /* Se o Arquivo foi completamente lido, avisa que o Arquivo acabou.
-                           * Se não, continua lendo do arquivo. */
-                           bytes_lidos = fread(buffer, 1, 127, tsr.arq_tesouro);
-                           if (bytes_lidos > 0){
-                              cria_mensagem(msg_enviar, bytes_lidos, sequencia_msg, TEXTO, buffer);
-                           }
-                           else {
-                              cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
-                              movimento_processado = 0;
-                           }
-                        } else {
-                           cria_mensagem(msg_enviar, bytes_lidos, sequencia_msg, TEXTO, buffer);
-                        }
-                     }
-
-                     /* (ACK05) Mandou ERRO -> Envia FIM_ARQUIVO */
-                     else if (MSG_TIPO(msg_anterior) == ERRO){
-                        cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
-                        movimento_processado = 0;
-                     }
-                  }
-
-
-                  /* (MR03) Mensagem NACK */
-                  else if (msg_tipo_sv == NACK){
-                     cria_mensagem(msg_enviar, bytes_lidos, sequencia_msg, MSG_TIPO(msg_anterior), buffer);
-                  }
-
-
-                  /* (MR04) Mensagem ERRO */
-                  else if (msg_tipo_sv == ERRO){
+                     /* Tesouro NÃO encontrado -> Acaba Rodada. */
+                     else
+                        SV_PROCESSA_MOVIMENTO(estados) = 1;
                      
-                     if (msg_recebida[5] == ESPACO_INSUFICIENTE){
-                        printf("        [E] Espaço Insuficiente para o tesouro.\n");
-                        cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
-                        movimento_processado = 0;
+                     SV_MONTA_TAMANHO_SV(estados) = 0;
+                  }
+
+                  /* (ACK04) Mandou TEXTO, IMAGEM ou VIDEO -> Envia TEXTO, IMAGEM, VIDEO ou FIM_ARQUIVO */
+                  else if ((SV_MONTA_DADOS(estados) || SV_MONTA_ARQUIVO(estados)) && 
+                           (MSG_TIPO(msg_anterior) == DADOS || MSG_TIPO(msg_anterior) == TEXTO || 
+                           MSG_TIPO(msg_anterior) == IMAGEM || MSG_TIPO(msg_anterior) == VIDEO)){
+
+                     /* Atualiza o número da sequência do arquivo, para controle de fluxo. */
+                     if (SV_MONTA_DADOS(estados) && MSG_TIPO(msg_anterior) == DADOS){
+                        sequencia_atual    = 0;
+                        sequencia_anterior = 0;
+                        bytes_lidos = fread((void*) buffer, 1, 127, tsr.arq_tesouro);
+
+                        if (bytes_lidos == 0)
+                           SV_PROCESSA_MOVIMENTO(estados) = 1;
+                        else 
+                           SV_MONTA_ARQUIVO(estados)      = 1;
+                        
+                        SV_MONTA_DADOS(estados) = 0;
+                     }
+
+                     else if (SV_MONTA_ARQUIVO(estados)) {
+                        if (MSG_SEQUENCIA(msg_recebida) == sequencia_atual){
+                           sequencia_anterior = sequencia_atual;
+                           sequencia_atual = (sequencia_atual + 1) % 32;
+                           
+                           bytes_lidos = fread((void*) buffer, 1, 127, tsr.arq_tesouro);
+                           if (bytes_lidos == 0){
+                              SV_MONTA_ARQUIVO(estados)      = 0;
+                              SV_PROCESSA_MOVIMENTO(estados) = 1;
+                           }
+                        }
                      }
                   }
+
+                  /* (ACK05) Mandou ERRO -> Envia FIM_ARQUIVO */
+                  else if (SV_MONTA_ERRO(estados) && MSG_TIPO(msg_anterior) == ERRO){
+                     SV_MONTA_ERRO(estados)         = 0;
+                     SV_PROCESSA_MOVIMENTO(estados) = 1;
+                  }
+               }
+
+               /* (MR04) Mensagem ERRO */
+               else if (MSG_TIPO(msg_recebida) == ERRO){
+
+                  printf("        [E] Espaço Insuficiente para o tesouro.\n");
+
+                  SV_PROCESSA_MOVIMENTO(estados) = 1;
+
+               }
+
+               /* Parte II: Envio de Mensagens */
+               /* Calcula a próxima mensagem a enviar, e a envia. */
+
+               msg_tipo_sv = MSG_TIPO(msg_recebida);
+
+               if (msg_tipo_sv == MV_BX || msg_tipo_sv == MV_CM || 
+                   msg_tipo_sv == MV_EQ || msg_tipo_sv == MV_DI)
+                  cria_mensagem(msg_enviar, 1, 0, OK, &num_tesouro);
+               
+               else if (msg_tipo_sv == ACK){
+                  unsigned char tipo_anterior = MSG_TIPO(msg_anterior);
+        
+                  if (tipo_anterior == OK){
+                     if (num_tesouro == 0)
+                        cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
+                     else {
+                        if (id_erro == ESPACO_INSUFICIENTE)
+                           cria_mensagem(msg_enviar, 1, 0, ERRO, &id_erro);
+                        else if (id_erro == 0)
+                           cria_mensagem(msg_enviar, sizeof(unsigned long), 0, TAMANHO, (unsigned char*) &tamanho);
+                     }
+                  }
+
+                  else if (tipo_anterior == TAMANHO)
+                     cria_mensagem(msg_enviar, 6, 0, DADOS, (unsigned char*) tsr.nome_tesouro);
+                  
+                  else if (tipo_anterior == DADOS || tipo_anterior == TEXTO){
+                     if (tipo_anterior == TEXTO){
+                        if (MSG_SEQUENCIA(msg_recebida) == sequencia_anterior){
+                           if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, TEXTO, buffer);
+                           else cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
+                        } 
+
+                        else {
+                           copia_mensagem(msg_anterior, msg_enviar);
+                        }
+                     }
+                     
+                     else if (tipo_anterior == DADOS){
+                        if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, TEXTO, buffer);
+                        else cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
+                     }
+                  }
+
+                  else if (tipo_anterior == ERRO)
+                     cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
+               }
+
+               else if (msg_tipo_sv == ERRO)
+                  cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
+               
+               else if (msg_tipo_sv == NACK){
+                  if (MSG_TIPO(msg_anterior) == OK)
+                     cria_mensagem(msg_enviar, 1, 0, OK, &num_tesouro);
+                  
+                  else if (MSG_TIPO(msg_anterior) == TAMANHO)
+                     cria_mensagem(msg_enviar, 6, 0, DADOS, (unsigned char*) tsr.nome_tesouro);
+                  
+                  else if (MSG_TIPO(msg_anterior) == DADOS){
+                     if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, TEXTO, buffer);
+                     else cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
+                  }
+
+                  else if (MSG_TIPO(msg_anterior) == TEXTO){
+                     if (MSG_SEQUENCIA(msg_recebida) == sequencia_anterior){
+                        if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, TEXTO, buffer);
+                        else cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
+                     } 
+
+                     else {
+                        copia_mensagem(msg_anterior, msg_enviar);
+                     }
+                  }
+
+                  else if (MSG_TIPO(msg_anterior) == FIM_ARQUIVO)
+                     cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
                }
 
                copia_mensagem(msg_enviar, msg_anterior);
-               
-               if (!mensagem_invalida) {
-                  envia_mensagem(msg_enviar, soquete);
-               }
+               envia_mensagem(msg_enviar, soquete);
 
-               mensagem_invalida = 0;
                envia_ou_recebe = ESTADO_RECEBE;
             }
 
             /* (2) Servidor RECEBE uma Mensagem */
             else if (envia_ou_recebe == ESTADO_RECEBE){
-               validade = recebe_mensagem(msg_recebida, soquete, TEMPO_TIMEOUT);
+               validade = recebe_mensagem(msg_recebida, soquete, tempo_timeout);
 
-               /* (ST01) Tempo de Timeout Atingido... */
+               /* (ST01) Timeout atingido... */
                if (validade == MSG_TIMEOUT){
-                  envia_mensagem(msg_enviar, soquete);
-               }
-               /* (ST02) Mensagem Recebida contém Erro... */
-               else if (validade == MSG_ERRO_CHECK){
-                  mensagem_t msg_nack = malloc(132 * sizeof(unsigned char));
+                  num_timeouts++;
+                  if (num_timeouts > 30){
+                     fprintf(stderr, "Não foi possível continuar a conexão. Conexão finalizada...\n");
+                     exit(-1);
+                  }
+
+                  tempo_timeout = tempo_timeout + 1000;
                   
-                  cria_mensagem(msg_nack, 0, 0, NACK, NULL);
-                  envia_mensagem(msg_nack, soquete);
-                  free(msg_nack);
+                  if (d) printf("        [D] TIMEOUT. Reenvia e Espera [%ds]...\n", tempo_timeout / 1000);
+                  if (MSG_TIPO(msg_enviar) != ACK && MSG_TIPO(msg_enviar) != NACK)
+                     envia_mensagem(msg_anterior, soquete);
                }
 
-               /* (ST03) Mensagem Recebida está inválida... */
-               else if (validade == MSG_INVALIDA) {
-                  envia_ou_recebe = ESTADO_ENVIA;
-                  mensagem_invalida = 1;
-               }
+               /* (ST02) Mensagem Recebida contém Erro... */
+               //else if (validade == MSG_ERRO_CHECK){
+                  //if (d) printf("        [D] Mensagem com Erro...\n");
+                  //cria_mensagem(msg_enviar, 0, 0, NACK, NULL);
+                  //envia_mensagem(msg_enviar, soquete);
+               //}
+               
+               /* (ST03) Mensagem Recebida Válida! */
                else {
+                  num_timeouts    = 0;
+                  tempo_timeout   = TIMEOUT_INICIAL;
                   envia_ou_recebe = ESTADO_ENVIA;
                }
-
             }
          }
 
-         /* Fim de jogo! Parabéns por completar o nosso jogo! */
-         if (fim_de_jogo(MatrizTabuleiro, TAM_TABULEIRO)) break;
-         
          sleep(1);
          system("clear");
       }
-
-      /* Jogo Terminou! */
-      system("clear");
-      imprime_tabuleiro(MatrizTabuleiro, TAM_TABULEIRO);
-      printf("              [Fim de Jogo]            \n");
    }
 
    /* Libera a Memória das Estruturas */

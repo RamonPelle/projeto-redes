@@ -16,8 +16,10 @@
 void imprime_tabuleiro(char** MatrizTabuleiro, int tam)
 {
    printf("\n          [Planeta do Tesouro]          \n");
+   usleep(300000);
 
    printf("   ┌───┬───┬───┬───┬───┬───┬───┬───┐ \n");
+   usleep(300000);
 
    for (int i = 0; i < tam; i++) {
       printf(" %d ", tam - i - 1);
@@ -25,10 +27,12 @@ void imprime_tabuleiro(char** MatrizTabuleiro, int tam)
          printf("│ %c ", MatrizTabuleiro[i][j]);
       printf("│\n");
       if (i != tam - 1) printf("   ├───┼───┼───┼───┼───┼───┼───┼───┤ \n");
+      usleep(300000);
    }
    
    printf("   └───┴───┴───┴───┴───┴───┴───┴───┘ \n"
           "     0   1   2   3   4   5   6   7   \n");
+   usleep(300000);
 }
 
 /* [Função] inicia_tabuleiro()
