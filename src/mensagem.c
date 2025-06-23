@@ -14,7 +14,7 @@ unsigned char calcula_checksum(mensagem_t msg)
 {
    unsigned char checksum = 0;
    
-   if (msg == NULL) return 0;
+   // if (msg == NULL) return 0;
 
    /* Checksum <- Tamanho + Sequência + Tipo */
    for (int i = 1; i < 4; i++)
