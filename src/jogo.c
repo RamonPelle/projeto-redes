@@ -684,22 +684,14 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      cria_mensagem(msg_enviar, 1, 0, OK, &num_tesouro);
                   
                   else if (MSG_TIPO(msg_anterior) == TAMANHO)
-                     cria_mensagem(msg_enviar, 6, 0, DADOS, (unsigned char*) tsr.nome_tesouro);
-                  
+                     cria_mensagem(msg_enviar, sizeof(unsigned long), 0, TAMANHO, (unsigned char*) &tamanho);
+
                   else if (MSG_TIPO(msg_anterior) == DADOS){
-                     if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, TEXTO, buffer);
-                     else cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
+                     cria_mensagem(msg_enviar, 6, 0, DADOS, (unsigned char*) tsr.nome_tesouro);
                   }
 
                   else if (MSG_TIPO(msg_anterior) == TEXTO){
-                     if (MSG_SEQUENCIA(msg_recebida) == sequencia_anterior){
-                        if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, TEXTO, buffer);
-                        else cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
-                     } 
-
-                     else {
-                        copia_mensagem(msg_anterior, msg_enviar);
-                     }
+                     cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, TEXTO, buffer);
                   }
 
                   else if (MSG_TIPO(msg_anterior) == FIM_ARQUIVO)
