@@ -293,10 +293,12 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      CL_PROCESSA_FIM(estados)     = 1;
                   }
 
-                  else if (MSG_SEQUENCIA(msg_recebida) == sequencia_atual){
+                  else if (MSG_TIPO(msg_recebida) == TEXTO && MSG_SEQUENCIA(msg_recebida) == sequencia_atual){
                      fwrite((void*) &msg_recebida[5], MSG_TAMANHO(msg_recebida), 1, novo_arquivo);
                      sequencia_anterior = sequencia_atual;
                      sequencia_atual = (sequencia_atual + 1) % 32;
+                  } else {
+                     printf("aqui o bolo sova forte");
                   }
 
                }
@@ -696,7 +698,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   else if (MSG_TIPO(msg_anterior) == TEXTO){
                      fseek(tsr.arq_tesouro, -1*bytes_lidos, SEEK_CUR);
                      bytes_lidos = fread((void*) buffer, 1, 127, tsr.arq_tesouro);
-                     cria_mensagem(msg_enviar, bytes_lidos, sequencia_anterior, TEXTO, buffer);
+                     cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, TEXTO, buffer);
                      printf("EU CAI NO NACK TEXTO e enviei msg de sequencia [0x%02x] e tipo [0x%02x] ", MSG_SEQUENCIA(msg_anterior), MSG_TIPO(msg_anterior) );
                   }
 
