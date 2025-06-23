@@ -680,7 +680,6 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
                
                else if (msg_tipo_sv == NACK){
-                  printf("EU CAI NO NACK");
                   if (MSG_TIPO(msg_anterior) == OK){
                      cria_mensagem(msg_enviar, 1, 0, OK, &num_tesouro);
                      printf("EU CAI NO NACK OK");
@@ -695,13 +694,16 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   }
 
                   else if (MSG_TIPO(msg_anterior) == TEXTO){
+                     fseek(tsr.arq_tesouro, -1*bytes_lidos, SEEK_CUR);
+                     bytes_lidos = fread((void*) buffer, 1, 127, tsr.arq_tesouro);
                      cria_mensagem(msg_enviar, bytes_lidos, sequencia_anterior, TEXTO, buffer);
-                     printf("EU CAI NO NACK TEXTO");
+                     printf("EU CAI NO NACK TEXTO e enviei msg de sequencia [0x%02x] e tipo [0x%02x] ", MSG_SEQUENCIA(msg_anterior), MSG_TIPO(msg_anterior) );
                   }
 
-                  else if (MSG_TIPO(msg_anterior) == FIM_ARQUIVO)
+                  else if (MSG_TIPO(msg_anterior) == FIM_ARQUIVO){
                      cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
                      printf("EU CAI NO NACK FIM_ARQUIVO");
+                  }
                }
 
                copia_mensagem(msg_enviar, msg_anterior);
