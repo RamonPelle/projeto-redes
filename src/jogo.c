@@ -320,13 +320,16 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
                      if (tipo_arquivo == IMAGEM) {
                         strcpy(abrir_aqv, "eog ");
+                        strcpy(&abrir_aqv[4], caminho_aqv);
                      } else if (tipo_arquivo == VIDEO) {
                         strcpy(abrir_aqv, "mplayer ");
+                        strcpy(&abrir_aqv[8], caminho_aqv);
                      } else if (tipo_arquivo == TEXTO) {
                         strcpy(abrir_aqv, "nvim ");
+                        strcpy(&abrir_aqv[5], caminho_aqv);
                      }
 
-                     strcpy(&abrir_aqv[9], caminho_aqv);
+                     printf("comando completo: %s", abrir_aqv)
                      system(abrir_aqv);
                      free(abrir_aqv);
                   }
@@ -724,7 +727,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      }
                   }
                }
-               
+
                if (msg_tipo_sv != NACK) {
                   copia_mensagem(msg_enviar, msg_anterior);
                }
