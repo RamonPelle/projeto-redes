@@ -723,7 +723,8 @@ void jogo_tesouro(int soquete, Usuario usuario)
                         copia_mensagem(msg_anterior, msg_enviar);
                      }
                   }
-
+               }
+               
                if (msg_tipo_sv != NACK) {
                   copia_mensagem(msg_enviar, msg_anterior);
                }
@@ -778,5 +779,5 @@ void jogo_tesouro(int soquete, Usuario usuario)
    free(msg_enviar);
    free(msg_anterior);
    free(msg_recebida);
-}}
+}
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
