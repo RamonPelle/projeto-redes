@@ -96,7 +96,8 @@ void jogo_tesouro(int soquete, Usuario usuario)
    unsigned char sequencia_atual;
    unsigned char sequencia_anterior;         
    unsigned char buffer[127];
-   
+   unsigned char tipo_arquivo;
+
    mensagem_t msg_enviar   = (mensagem_t) malloc(132 * sizeof(unsigned char));
    mensagem_t msg_anterior = (mensagem_t) malloc(132 * sizeof(unsigned char));
    mensagem_t msg_recebida = (mensagem_t) malloc(132 * sizeof(unsigned char));
@@ -293,7 +294,9 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      CL_PROCESSA_FIM(estados)     = 1;
                   }
 
+                  
                   else if (MSG_SEQUENCIA(msg_recebida) == sequencia_atual){
+                     tipo_arquivo = MSG_TIPO(msg_recebida);
                      fwrite((void*) &msg_recebida[5], MSG_TAMANHO(msg_recebida), 1, novo_arquivo);
                      sequencia_anterior = sequencia_atual;
                      sequencia_atual = (sequencia_atual + 1) % 32;
@@ -312,9 +315,17 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      printf("        [Y] Tesouro Coletado com Sucesso!\n");
 
                      char* abrir_aqv = (char*) malloc(25 * sizeof(char));
-                     strcpy(abrir_aqv, "xdg-open ");
+
+                     if (tipo_arquivo == IMAGEM) {
+                        strcpy(abrir_aqv, "eog ");
+                     } else if (tipo_arquivo == VIDEO) {
+                        strcpy(abrir_aqv, "mplayer ");
+                     } else if (tipo_arquivo == TEXTO) {
+                        strcpy(abrir_aqv, "nvim ");
+                     }
+
                      strcpy(&abrir_aqv[9], caminho_aqv);
-                     //system(abrir_aqv);
+                     system(abrir_aqv);
                      free(abrir_aqv);
                   }
 
@@ -349,7 +360,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
                }
 
-               else if (msg_tipo_cl == TEXTO){
+               else if (msg_tipo_cl == TEXTO || msg_tipo_cl == IMAGEM || msg_tipo_cl == VIDEO){
                   if (d) printf("        [D] Envia ACK-ARQUIVO [%d].\n", sequencia_anterior);
                   cria_mensagem(msg_enviar, 0, sequencia_anterior, ACK, NULL);
                }
@@ -565,6 +576,16 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
                            stat(caminho_aqv, &buf_dados);
                            tamanho = buf_dados.st_size;
+                           
+                           if (tsr.tipo_tesouro == TIPO_IMAGEM) {
+                              tipo_arquivo = IMAGEM;
+                           } else if (tsr.tipo_tesouro == TIPO_TEXTO) {
+                              tipo_arquivo = TEXTO;
+                           } else if (tsr.tipo_tesouro == TIPO_VIDEO) {
+                              tipo_arquivo = VIDEO;
+                           } else {
+                              printf("Formato de tesouro incompatível.");
+                           }
 
                            printf("        [B] Tamanho do Tesouro: %lu B\n", tamanho);
 
@@ -581,8 +602,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
                   /* (ACK04) Mandou TEXTO, IMAGEM ou VIDEO -> Envia TEXTO, IMAGEM, VIDEO ou FIM_ARQUIVO */
                   else if ((SV_MONTA_DADOS(estados) || SV_MONTA_ARQUIVO(estados)) && 
-                           (MSG_TIPO(msg_anterior) == DADOS || MSG_TIPO(msg_anterior) == TEXTO || 
-                           MSG_TIPO(msg_anterior) == IMAGEM || MSG_TIPO(msg_anterior) == VIDEO)){
+                           (MSG_TIPO(msg_anterior) == DADOS || MSG_TIPO(msg_anterior) == tipo_arquivo)){
 
                      /* Atualiza o número da sequência do arquivo, para controle de fluxo. */
                      if (SV_MONTA_DADOS(estados) && MSG_TIPO(msg_anterior) == DADOS){
@@ -654,10 +674,10 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   else if (tipo_anterior == TAMANHO)
                      cria_mensagem(msg_enviar, 6, 0, DADOS, (unsigned char*) tsr.nome_tesouro);
                   
-                  else if (tipo_anterior == DADOS || tipo_anterior == TEXTO){
-                     if (tipo_anterior == TEXTO){
+                  else if (tipo_anterior == DADOS || tipo_anterior == tipo_arquivo){
+                     if (tipo_anterior == tipo_arquivo){
                         if (MSG_SEQUENCIA(msg_recebida) == sequencia_anterior){
-                           if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, TEXTO, buffer);
+                           if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, tipo_arquivo, buffer);
                            else cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
                         } 
 
@@ -667,7 +687,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      }
                      
                      else if (tipo_anterior == DADOS){
-                        if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, TEXTO, buffer);
+                        if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, tipo_arquivo, buffer);
                         else cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
                      }
                   }
@@ -687,13 +707,13 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      cria_mensagem(msg_enviar, 6, 0, DADOS, (unsigned char*) tsr.nome_tesouro);
                   
                   else if (MSG_TIPO(msg_anterior) == DADOS){
-                     if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, TEXTO, buffer);
+                     if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, tipo_arquivo, buffer);
                      else cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
                   }
 
-                  else if (MSG_TIPO(msg_anterior) == TEXTO){
+                  else if (MSG_TIPO(msg_anterior) == tipo_arquivo){
                      if (MSG_SEQUENCIA(msg_recebida) == sequencia_anterior){
-                        if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, TEXTO, buffer);
+                        if (bytes_lidos > 0) cria_mensagem(msg_enviar, bytes_lidos, sequencia_atual, tipo_arquivo, buffer);
                         else cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
                      } 
 
