@@ -329,7 +329,6 @@ void jogo_tesouro(int soquete, Usuario usuario)
                         strcpy(&abrir_aqv[5], caminho_aqv);
                      }
 
-                     printf("comando completo: %s", abrir_aqv)
                      system(abrir_aqv);
                      free(abrir_aqv);
                   }
