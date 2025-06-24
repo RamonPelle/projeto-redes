@@ -300,6 +300,8 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      fwrite((void*) &msg_recebida[5], MSG_TAMANHO(msg_recebida), 1, novo_arquivo);
                      sequencia_anterior = sequencia_atual;
                      sequencia_atual = (sequencia_atual + 1) % 32;
+                  } else {
+                     printf("aqui o bolo sova forte");
                   }
 
                }
@@ -722,11 +724,10 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      }
                   }
 
-                  else if (MSG_TIPO(msg_anterior) == FIM_ARQUIVO)
-                     cria_mensagem(msg_enviar, 0, 0, FIM_ARQUIVO, NULL);
+               if (msg_tipo_sv != NACK) {
+                  copia_mensagem(msg_enviar, msg_anterior);
                }
-
-               copia_mensagem(msg_enviar, msg_anterior);
+               
                envia_mensagem(msg_enviar, soquete);
 
                envia_ou_recebe = ESTADO_RECEBE;
