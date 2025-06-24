@@ -778,5 +778,5 @@ void jogo_tesouro(int soquete, Usuario usuario)
    free(msg_enviar);
    free(msg_anterior);
    free(msg_recebida);
-}
+}}
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
