@@ -1,7 +1,7 @@
 # /* - = - = - = Disciplina CI1058: Redes I = - = - = - */
 # // Docentes: Albini & Todt
 # // Discente 01: Leonardo Amorim Carpwiski (GRR 20232331)
-# // Discente 02: Ramon Pelle               (GRR 20232379)
+# // Discente 02: Ramon Pelle               (GRR 20244408)
 # /* - = - = - = - = - = - = - = - = - = - = - = - = - */
 
 # Curitiba, Paraná - Maio/Junho, 2025
