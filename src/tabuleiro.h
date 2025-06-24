@@ -1,10 +1,14 @@
 #ifndef __TABULEIRO_H_
 #define __TABULEIRO_H_
 
+#define TIPO_TEXTO 1
+#define TIPO_IMAGEM 2
+#define TIPO_VIDEO 3
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 typedef struct {
    FILE* arq_tesouro;
    char* nome_tesouro;
+   unsigned char tipo_tesouro;
 } Tesouro_t;
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 

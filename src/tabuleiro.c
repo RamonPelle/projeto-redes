@@ -16,19 +16,23 @@
 void imprime_tabuleiro(char** MatrizTabuleiro, int tam)
 {
    printf("\n          [Planeta do Tesouro]          \n");
+   usleep(100000);
 
    printf("   ┌───┬───┬───┬───┬───┬───┬───┬───┐ \n");
-   
+   usleep(100000);
+
    for (int i = 0; i < tam; i++) {
       printf(" %d ", tam - i - 1);
       for (int j = 0; j < tam; j++)
          printf("│ %c ", MatrizTabuleiro[i][j]);
       printf("│\n");
       if (i != tam - 1) printf("   ├───┼───┼───┼───┼───┼───┼───┼───┤ \n");
+      usleep(100000);
    }
    
    printf("   └───┴───┴───┴───┴───┴───┴───┴───┘ \n"
           "     0   1   2   3   4   5   6   7   \n");
+   usleep(100000);
 }
 
 /* [Função] inicia_tabuleiro()
@@ -87,6 +91,7 @@ void abre_tesouros(Tesouro_t* Tesouros, int num_tesouros){
       if (f){
          Tesouros[i].arq_tesouro = f;
          strcpy(Tesouros[i].nome_tesouro, &local_tesouro[10]);
+         Tesouros[i].tipo_tesouro = TIPO_IMAGEM;
       }
 
       strcpy(&local_tesouro[12], "mp4");
@@ -94,6 +99,7 @@ void abre_tesouros(Tesouro_t* Tesouros, int num_tesouros){
       if (f){
          Tesouros[i].arq_tesouro = f;
          strcpy(Tesouros[i].nome_tesouro, &local_tesouro[10]);
+         Tesouros[i].tipo_tesouro = TIPO_VIDEO;
       }
 
       strcpy(&local_tesouro[12], "txt");
@@ -101,6 +107,7 @@ void abre_tesouros(Tesouro_t* Tesouros, int num_tesouros){
       if (f){
          Tesouros[i].arq_tesouro = f;
          strcpy(Tesouros[i].nome_tesouro, &local_tesouro[10]);
+         Tesouros[i].tipo_tesouro = TIPO_TEXTO;
       }
    }
 }
