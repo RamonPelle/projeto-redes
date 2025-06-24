@@ -13,7 +13,7 @@
 #define NUM_TESOUROS    8
 #define TAM_TABULEIRO   8
 #define TIMEOUT_INICIAL 1000
-#define DEBUG           1
+#define DEBUG           0
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 /* - - - - - - - - - - - - - ESTADOS DO CLIENTE  - - - - - - - - - - - - - - */
@@ -300,8 +300,6 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      fwrite((void*) &msg_recebida[5], MSG_TAMANHO(msg_recebida), 1, novo_arquivo);
                      sequencia_anterior = sequencia_atual;
                      sequencia_atual = (sequencia_atual + 1) % 32;
-                  } else {
-                     printf("aqui o bolo sova forte");
                   }
 
                }
