@@ -13,7 +13,7 @@
 #define NUM_TESOUROS    8
 #define TAM_TABULEIRO   8
 #define TIMEOUT_INICIAL 500
-#define DEBUG           1
+#define DEBUG           0
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 /* - - - - - - - - - - - - - ESTADOS DO CLIENTE  - - - - - - - - - - - - - - */
