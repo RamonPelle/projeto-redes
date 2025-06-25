@@ -295,8 +295,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      CL_PROCESSA_FIM(estados)     = 1;
                   }
 
-                  
-                  else if (MSG_SEQUENCIA(msg_recebida) == sequencia_atual){
+                  else if ((MSG_TIPO(msg_recebida) == TEXTO || MSG_TIPO(msg_recebida) == VIDEO || MSG_TIPO(msg_recebida) == IMAGEM)  && MSG_SEQUENCIA(msg_recebida) == sequencia_atual){
                      tipo_arquivo = MSG_TIPO(msg_recebida);
                      fwrite((void*) &msg_recebida[5], MSG_TAMANHO(msg_recebida), 1, novo_arquivo);
                      sequencia_anterior = sequencia_atual;
