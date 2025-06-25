@@ -12,7 +12,7 @@
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 #define NUM_TESOUROS    8
 #define TAM_TABULEIRO   8
-#define TIMEOUT_INICIAL 1000
+#define TIMEOUT_INICIAL 500
 #define DEBUG           0
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -396,9 +396,9 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      exit(-1);
                   }
 
-                  tempo_timeout = tempo_timeout + 1000;
+                  tempo_timeout = tempo_timeout + 200;
 
-                  if (d) printf("        [D] TIMEOUT. Reenvia [0x%02x] e Espera [%ds]...\n", MSG_TIPO(msg_anterior), tempo_timeout / 1000);
+                  if (d) printf("        [D] TIMEOUT. Reenvia [0x%02x] e Espera [%ds]...\n", MSG_TIPO(msg_anterior), tempo_timeout / 200);
                   if (MSG_TIPO(msg_enviar) != ACK && MSG_TIPO(msg_enviar) != NACK)
                      envia_mensagem(msg_anterior, soquete);
                }

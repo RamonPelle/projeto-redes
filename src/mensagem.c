@@ -38,6 +38,7 @@ int cria_mensagem(mensagem_t msg, unsigned char tam_dados, unsigned char seq,
    MSG_SEQUENCIA(msg) = seq;
    MSG_TIPO(msg)      = tipo;
 
+   //5: primeiro byte dos dados
    for (int i = 5; i < 5 + tam_dados; i++)
       msg[i] = dados[i - 5];
    
