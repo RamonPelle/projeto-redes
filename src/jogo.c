@@ -258,6 +258,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      printf("        [E] Erro. Tesouro Não Coletado.\n");
                      CL_PROCESSA_BOLO(estados) = 0;
                      CL_PROCESSA_FIM(estados)  = 1;
+                     tem_tesouro = 0;
                   }
                   
                   else if (MSG_TIPO(msg_recebida) == FIM_ARQUIVO){
@@ -371,12 +372,6 @@ void jogo_tesouro(int soquete, Usuario usuario)
                   if (d) printf("        [D] Envia ACK-ERRO.\n");
                   cria_mensagem(msg_enviar, 0, 0, ACK, NULL);
                }
-
-               //else if (msg_tipo_cl == NACK){
-               //   if (d) printf("        [D] Envia MENSAGEM ANTERIOR (Nack).\n");
-               //   if (MSG_TIPO(msg_anterior) != ACK) 
-               //      copia_mensagem(msg_anterior, msg_enviar);
-               //}
                
                envia_mensagem(msg_enviar, soquete);
 
@@ -400,7 +395,7 @@ void jogo_tesouro(int soquete, Usuario usuario)
 
                   if (d) printf("        [D] TIMEOUT. Reenvia [0x%02x] e Espera [%ds]...\n", MSG_TIPO(msg_anterior), tempo_timeout / 200);
                   if (MSG_TIPO(msg_enviar) != ACK && MSG_TIPO(msg_enviar) != NACK)
-                     envia_mensagem(msg_anterior, soquete);
+                     envia_mensagem(msg_enviar, soquete);
                }
 
                /* (ST02) Mensagem Recebida contém Erro... */
@@ -746,19 +741,12 @@ void jogo_tesouro(int soquete, Usuario usuario)
                      exit(-1);
                   }
 
-                  tempo_timeout = tempo_timeout + 1000;
+                  tempo_timeout = tempo_timeout + 200;
                   
-                  if (d) printf("        [D] TIMEOUT. Reenvia e Espera [%ds]...\n", tempo_timeout / 1000);
+                  if (d) printf("        [D] TIMEOUT. Reenvia e Espera [%ds]...\n", tempo_timeout / 200);
                   if (MSG_TIPO(msg_enviar) != ACK && MSG_TIPO(msg_enviar) != NACK)
-                     envia_mensagem(msg_anterior, soquete);
+                     envia_mensagem(msg_enviar, soquete);
                }
-
-               /* (ST02) Mensagem Recebida contém Erro... */
-               //else if (validade == MSG_ERRO_CHECK){
-                  //if (d) printf("        [D] Mensagem com Erro...\n");
-                  //cria_mensagem(msg_enviar, 0, 0, NACK, NULL);
-                  //envia_mensagem(msg_enviar, soquete);
-               //}
                
                /* (ST03) Mensagem Recebida Válida! */
                else {
