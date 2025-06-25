@@ -139,8 +139,7 @@ int recebe_mensagem(mensagem_t msg, int soquete, int timeoutMillis){
    long long comeco = timestamp();
 
    while (1) {
-      if (timestamp() - comeco > timeoutMillis) return MSG_TIMEOUT;
-
+      total_bytes = 0;
       while (total_bytes < 132){
          if (timestamp() - comeco > timeoutMillis) return MSG_TIMEOUT;
 
